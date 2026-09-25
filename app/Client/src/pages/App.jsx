@@ -2,7 +2,7 @@ function App() {
   return (
     <>
       <div className="container">
-        <h1 className="title is-1 has-text-centered">REACT App 4D6</h1>
+        <h1 className="title is-1 has-text-centered">Échec et app</h1>
       </div>
     </>
   );
