@@ -1,6 +1,8 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import chess from "chess.js";
+import authRouter from "./routes/auth.js";
 
 
 const app = express();
@@ -11,6 +13,7 @@ app.use(express.json());
 app.use(express.static("public"));
 
 // Importation des routes
+app.use("/auth", authRouter)
 let game = new chess.Chess(); // À changer pour la bd
 
 // Route de base
