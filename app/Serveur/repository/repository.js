@@ -4,7 +4,12 @@
 
 export { pool } from "./db.js"
 
-export { createGame, findGameByCode } from "./gameRepository.js"
+export {
+    createGame,
+    findGameByCode,
+    findHistoryGames,
+    createGameResult
+} from "./gameRepository.js"
 export {
     createUser,
     findUserByEmail,

@@ -1,5 +1,8 @@
+import pg from "pg";
+
 const { Pool } = pg;
-const pool = process.env.DATABASE_URL ? new Pool({ connectionString: process.env.DATABASE_URL }) : DATABASE_URL ? new Pool({ connectionString: DATABASE_URL }) : null;
+const DATABASE_URL = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/chess_app";
+const pool = new Pool({ connectionString: DATABASE_URL });
 
 
 export default { pool };
