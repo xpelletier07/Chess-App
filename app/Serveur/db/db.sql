@@ -1,11 +1,24 @@
--- Script d'initialisation exécuté automatiquement au premier démarrage
--- du conteneur PostgreSQL (via docker-entrypoint-initdb.d).
--- Ajoutez ici vos tables au fur et à mesure du développement.
-
-CREATE TABLE IF NOT EXISTS utilisateurs (
-    id SERIAL PRIMARY KEY,
-    nom_utilisateur VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    mot_de_passe_hash VARCHAR(255) NOT NULL,
-    cree_le TIMESTAMP NOT NULL DEFAULT NOW()
+create table users (
+    id serial primary key,
+    username varchar(50) not null unique,
+    password varchar(255) not null,
+    email varchar(100) not null unique,
+    created_at timestamp default current_timestamp
 );
+
+create table history_games (
+    id serial primary key,
+    player1_id int references users(id),
+    player2_id int references users(id),
+    winner_id int references users(id),
+    created_at timestamp default current_timestamp
+);
+
+create table moves (
+    id serial primary key,
+    game_id int references history_games(id),
+    player_id int references users(id),
+    move varchar(10) not null,
+    created_at timestamp default current_timestamp
+);
+
