@@ -1,9 +1,11 @@
 import { useState } from "react";
 import Forfeit from "../components/forfeit.jsx";
+import { useAuth } from "../auth/AuthContext.jsx";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 function App() {
+  const { token } = useAuth();
   const [gameResult, setGameResult] = useState(null);
   const [savingResult, setSavingResult] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -15,9 +17,12 @@ function App() {
     setSaveError("");
 
     try {
-      const response = await fetch(`${API_URL}/api/games/result`, {
+      const response = await fetch(`${API_URL}/games/result`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ result, endedBy, winnerId }),
       });
       const data = await response.json();
