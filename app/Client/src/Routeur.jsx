@@ -4,6 +4,7 @@ import ProtectedRoute from "./auth/ProtectedRoute";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import App from "./pages/App.jsx";
+import Game from "./pages/Game.jsx";
 
 function Routeur() {
 	return (
@@ -20,7 +21,14 @@ function Routeur() {
 							</ProtectedRoute>
 						}
 					/>
-
+					<Route
+						path="/game/:gameId"
+						element={
+							<ProtectedRoute>
+								<Game />
+							</ProtectedRoute>
+						}
+					/>
 					{/*
 						Insérer vos autres pages protégées ici
 					*/}

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { Chess } from "chess.js";
+import { Chess } from 'chess.js'
 import { Chessboard } from "react-chessboard";
-import { API_URL } from "../config";
+import { API_BASE_URL } from "../config.js";
 
 async function api(path, method = "GET", body) {
-	const res = await fetch(API_URL + path, {
+	const res = await fetch(API_BASE_URL + path, {
 		method,
 		credentials: "include", // si ton auth est en JWT dans un header, remplace par Authorization
 		headers: { "Content-Type": "application/json" },
