@@ -2,8 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import chess from "chess.js";
-import authRouter from "./routes/auth.js";
-
+import apiRouter from "./routes/Router.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,8 +11,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-// Importation des routes
-app.use("/auth", authRouter)
+// importation des routes
+app.use(apiRouter)
+
 let game = new chess.Chess(); // À changer pour la bd
 
 // Route de base
