@@ -4,6 +4,14 @@ import ProtectedRoute from "./auth/ProtectedRoute";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import App from "./pages/App.jsx";
+import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import ForfeitTest from "./pages/forfeit_test.jsx";
+
+// function isTokenExpired(token) {
+// 	const payload = JSON.parse(atob(token.split(".")[1]));
+// 	return payload.exp * 1000 < Date.now(); // exp is in seconds
+// }
 
 function Routeur() {
 	return (
@@ -20,6 +28,11 @@ function Routeur() {
 							</ProtectedRoute>
 						}
 					/>
+					{/*
+						/forfeit est une page de test pour l'abandon de partie. A supprimer plus tard.
+					*/}
+					<Route path="/forfeit" element={<ForfeitTest />} />
+
 
 					{/*
 						Insérer vos autres pages protégées ici
