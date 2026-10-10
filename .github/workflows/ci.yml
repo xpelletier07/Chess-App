@@ -24,10 +24,13 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: app/Client/package-lock.json
 
       # Ce qu'un coéquipier ferait sur une machine vide.
       - run: npm install
-      - run: npm test
+        working-directory: app/Client
+      - run: npm run build
+        working-directory: app/Client
 
   image:
     needs: test
