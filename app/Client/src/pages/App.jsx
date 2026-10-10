@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
 function App() {
@@ -20,6 +20,10 @@ function App() {
             </h1>
           </div>
           <div className="level-right">
+            <Link className="button is-link is-light mr-2" to="/history">
+              <span className="icon"><i className="fas fa-history" /></span>
+              <span>Historique</span>
+            </Link>
             <button className="button is-danger is-light" onClick={handleLogout}>
               Déconnexion
             </button>
