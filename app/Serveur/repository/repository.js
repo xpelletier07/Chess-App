@@ -4,4 +4,4 @@
 
 export { pool } from "./db.js"
 
-export { createGame, findGameByCode } from "./gameRepository.js"
+export { createGame, findGameByCode, joinGame } from "./gameRepository.js"

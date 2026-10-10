@@ -15,3 +15,26 @@ export async function findGameByCode(code) {
     return rows[0]
 }
 
+export async function joinGame(code, playerId) {
+    // premier check pour voir si la game existe
+    const check = findGameByCode(code)
+    if (check == undefined){
+        // retours d'erreurs avec valeurs spécifiques 
+        // qu'on va utiliser dans les routes pour afficher les bonnes erreurs
+        return 1
+    }
+    // si partie déjà en cours ou completée
+    if (check[0].state !== 'lobby'){
+        // impossible de join une game en cours ou completée
+        return 2
+    }
+    if (check[0].creator_id === playerId){
+        // impossible de join la game que vous avez créé
+        return 3
+    }
+    if (check[0].joiner_id !== null){
+        // impossible de join la game si déjà 2 joueurs
+        return 4
+    }
+    return 0
+}

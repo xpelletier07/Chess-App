@@ -32,4 +32,5 @@ CREATE TABLE IF NOT EXISTS game (
   code TEXT NOT NULL UNIQUE,
   -- 'lobby' | 'en cours' | 'finished'
   state TEXT NOT NULL DEFAULT 'lobby'
+  created_at timestamp default current_timestamp
 );
