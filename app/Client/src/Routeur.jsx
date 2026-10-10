@@ -5,7 +5,6 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import App from "./pages/App.jsx";
 import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import ForfeitTest from "./pages/forfeit_test.jsx";
 
 // function isTokenExpired(token) {
