@@ -5,3 +5,9 @@
 export { pool } from "./db.js"
 
 export { createGame, findGameByCode } from "./gameRepository.js"
+export {
+    createUser,
+    findUserByEmail,
+    findUserByEmailOrUsername,
+    userEmailExists
+} from "./userRepository.js"

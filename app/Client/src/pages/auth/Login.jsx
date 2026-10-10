@@ -39,7 +39,7 @@ export default function Login() {
 
       login(data.user, data.token)
       navigate('/')
-    } catch (err) {
+    } catch {
       setError('Impossible de contacter le serveur')
     } finally {
       setLoading(false)
