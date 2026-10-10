@@ -16,6 +16,10 @@ function getResultClass(result) {
   return 'is-warning'
 }
 
+function getPlayerName(name, id) {
+  return name || (id ? `Joueur #${id}` : 'Joueur non identifié')
+}
+
 export default function History() {
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
@@ -77,6 +81,17 @@ export default function History() {
                   <span className={`tag ${getResultClass(game.result)}`}>{game.result}</span>
                 </div>
                 <p className="history-date">{formatDate(game.created_at)}</p>
+                <div className="history-players" aria-label="Joueurs de la partie">
+                  <div className="history-player">
+                    <span className="history-player-color history-player-color-light" aria-hidden="true" />
+                    <span className="history-player-name">{getPlayerName(game.player1_name, game.player1_id)}</span>
+                  </div>
+                  <span className="history-versus" aria-hidden="true">VS</span>
+                  <div className="history-player history-player-right">
+                    <span className="history-player-name">{getPlayerName(game.player2_name, game.player2_id)}</span>
+                    <span className="history-player-color history-player-color-dark" aria-hidden="true" />
+                  </div>
+                </div>
                 <div className="history-detail">
                   <span>Fin de partie</span>
                   <strong>{game.ended_by}</strong>
