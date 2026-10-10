@@ -109,6 +109,18 @@
   text-align: right;
 }
 
+.history-winner {
+  flex: 0 0 auto;
+  color: #fbbf24;
+  font-size: 0.7rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.history-winner i {
+  margin-right: 0.2rem;
+}
+
 .history-player-color {
   flex: 0 0 auto;
   width: 0.8rem;

@@ -20,6 +20,10 @@ function getPlayerName(name, id) {
   return name || (id ? `Joueur #${id}` : 'Joueur non identifié')
 }
 
+function isWinner(game, playerId) {
+  return game.winner_id != null && String(game.winner_id) === String(playerId)
+}
+
 export default function History() {
   const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
@@ -85,10 +89,16 @@ export default function History() {
                   <div className="history-player">
                     <span className="history-player-color history-player-color-light" aria-hidden="true" />
                     <span className="history-player-name">{getPlayerName(game.player1_name, game.player1_id)}</span>
+                    {isWinner(game, game.player1_id) && (
+                      <span className="history-winner"><i className="fas fa-trophy" aria-hidden="true" /> Gagnant</span>
+                    )}
                   </div>
                   <span className="history-versus" aria-hidden="true">VS</span>
                   <div className="history-player history-player-right">
                     <span className="history-player-name">{getPlayerName(game.player2_name, game.player2_id)}</span>
+                    {isWinner(game, game.player2_id) && (
+                      <span className="history-winner"><i className="fas fa-trophy" aria-hidden="true" /> Gagnant</span>
+                    )}
                     <span className="history-player-color history-player-color-dark" aria-hidden="true" />
                   </div>
                 </div>
