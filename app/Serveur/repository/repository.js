@@ -5,3 +5,4 @@
 export { pool } from "./db.js"
 
 export { createGame, findGameByCode } from "./gameRepository.js"
+export { saveMove, setGameState } from "./playRepository.js"
