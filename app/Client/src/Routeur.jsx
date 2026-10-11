@@ -4,6 +4,7 @@ import ProtectedRoute from "./auth/ProtectedRoute";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import App from "./pages/App.jsx";
+import Classement from "./pages/Classement.jsx";
 
 function Routeur() {
 	return (
@@ -20,10 +21,16 @@ function Routeur() {
 							</ProtectedRoute>
 						}
 					/>
+					{/* Route protégée: seuls les utilisateurs authentifiés accèdent au classement. */}
+					<Route
+						path="/classement"
+						element={
+							<ProtectedRoute>
+								<Classement />
+							</ProtectedRoute>
+						}
+					/>
 
-					{/*
-						Insérer vos autres pages protégées ici
-					*/}
 					<Route
 						path="*"
 						element={<div className="section has-text-centered">Page non trouvée</div>}
