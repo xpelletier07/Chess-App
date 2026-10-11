@@ -84,7 +84,10 @@ export default function History() {
             {games.map((game) => (
               <article className="history-card box" key={game.id}>
                 <div className="history-card-top">
-                  <span className="history-game-number">Partie #{game.id}</span>
+                  <div>
+                    <div className="history-game-number">Partie #{game.player_game_number}</div>
+                    <div className="history-game-id">ID de partie : {game.id}</div>
+                  </div>
                   <span className={`tag ${getResultClass(game.result)}`}>{game.result}</span>
                 </div>
                 <p className="history-date">{formatDate(game.created_at)}</p>
