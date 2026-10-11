@@ -1,10 +1,17 @@
 // barrel export file
 // juste dropper toutes vos fonctions dans ce fichier et call repository.fonction() dans les routes
-// si besoin voir /routes/joinGame.js pour exemple
+// si besoin voir /routes/games.js pour exemple
 
 export { pool } from "./db.js"
 
-export { createGame, findGameByCode, joinGame, changeGameState } from "./gameRepository.js"
+export {
+    createGame,
+    findGameByCode, 
+    joinGame, 
+    changeGameState,
+    findHistoryGames,
+    createGameResult
+} from "./gameRepository.js"
 export {
     createUser,
     findUserByEmail,
