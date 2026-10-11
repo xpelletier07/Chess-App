@@ -4,6 +4,7 @@ import ProtectedRoute from "./auth/ProtectedRoute";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import App from "./pages/App.jsx";
+import Lobby from "./pages/Lobby.jsx";
 
 function Routeur() {
 	return (
@@ -12,14 +13,8 @@ function Routeur() {
 				<Routes>
 					<Route path="/login" element={<Login />} />
 					<Route path="/signup" element={<Signup />} />
-					<Route
-						path="/"
-						element={
-							<ProtectedRoute>
-								<App />
-							</ProtectedRoute>
-						}
-					/>
+					<Route path="/" element={<ProtectedRoute><App /></ProtectedRoute>} />
+					<Route path="/lobby/:code" element={<ProtectedRoute><Lobby /></ProtectedRoute>} />
 
 					{/*
 						Insérer vos autres pages protégées ici

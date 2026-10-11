@@ -1,9 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { API_BASE_URL } from '../../config'
+import { useState } from "react";
 
 function App() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user, logout } = useAuth()
+  const [code, setCode] = useState('')
+  const [error, setError] = useState(null);
+  const navigate = useNavigate()
+  // récupérer le token du local storage
+  const token = localStorage.getItem("token")
 
   function handleLogout() {
     logout();
@@ -13,11 +19,27 @@ function App() {
   async function join(event) {
     event.preventDefault();
     try {
-      await joinGame(code.trim(), nickname.trim());
-      saveSession(code.trim(), { role: 'player', nickname: nickname.trim() });
-      navigate(`/salon/${code.trim()}`);
+      const reponse = await fetch(`${API_BASE_URL}/game/join/${code}`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      })
     } catch (e) {
       setError(e.message);
+    }
+  }
+
+  async function create(event) {
+    event.preventDefault()
+    try {
+      const reponse = await fetch(`${API_BASE_URL}/game/newGame`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (reponse.ok) {
+        navigate(`/lobby/:${reponse}`)
+      }
+    } catch (e) {
+      setError(e.message)
     }
   }
 
@@ -56,10 +78,10 @@ function App() {
 
         <section className="card">
           <h2>Créer une nouvelle partie</h2>
-          <p>Choisissez un questionnaire, obtenez un code et invitez des joueurs.</p>
-          <Link className="button" to="/catalogue">
-            Ouvrir le catalogue
-          </Link>
+          <p>Obtenir un code pour inviter un autre joueur de votre choix</p>
+          <button onClick={create}>
+            Obtenir son code
+          </button>
         </section>
       </div>
 

@@ -4,12 +4,12 @@ import { checkAuth } from '../middlewares/checkAuth.js'
 
 const router = express.Router()
 
-// POST pour créer une nouvelle partie
+// POST pour créer une nouvelle partie, retourne juste le code au front end
 router.post("/newGame", checkAuth, async (req, res) => {
     try {
         const code = String(Math.floor(100000 + Math.random() * 900000))
         await repository.createGame(code, req.user.id)
-        return repository.findGameByCode(code)
+        return code
     } catch {
         console.error("Erreur dans POST /game/newGame", error)
         res.status(500).json({ error: "Erreur serveur" })
