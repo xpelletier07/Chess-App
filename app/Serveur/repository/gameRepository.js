@@ -2,7 +2,10 @@ import { pool } from "./db.js"
 
 // logique pour créer une nouvelle partie
 export async function createGame(code, creatorId) {
-    const { rows } = await pool.query(`insert into game (creator_id, code) values ($1, $2)`, [creatorId, code])
+    const { rows } = await pool.query(`with g as (
+            insert into game (creator_id, code) values ($2, $1) returning id
+        )
+        insert into game_details (game_id) select id from g returning game_id`, [code, creatorId])
     return rows[0]
 }
 
@@ -10,6 +13,29 @@ export async function createGame(code, creatorId) {
 export async function findGameByCode(code) {
     const { rows } = await pool.query('select * from game where code = $1', [code])
     return rows[0]
+}
+
+// retourne les détails d'une partie (pgn, fen, result, move_count, state)
+export async function getDetailsGame(game_id) {
+    const { rows } = await pool.query(
+        `select g.code, g.creator_id, g.joiner_id, g.state,
+                d.pgn, d.fen, d.move_count, d.result
+         from game_details d
+         join game g on g.id = d.game_id
+         where d.game_id = $1`, [game_id])
+    return rows[0]
+}
+
+// sauvegarde le pgn, le fen et le résultat après un coup, et incrémente move_count
+export async function saveMove(game_id, pgn, fen, result) {
+    await pool.query(`update game_details
+        set pgn = $2, fen = $3, result = $4, move_count = move_count + 1
+        where game_id = $1`, [game_id, pgn, fen, result])
+}
+
+// change l'état de la game ('lobby' | 'en_cours' | 'finished')
+export async function setGameState(game_id, state) {
+    await pool.query('update game set state = $2 where id = $1', [game_id, state])
 }
 
 export async function getGameStatus(code) {

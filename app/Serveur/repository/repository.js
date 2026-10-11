@@ -4,10 +4,12 @@
 
 export { pool } from "./db.js";
 
-export { saveMove, setGameState } from "./playRepository.js";
 export {
     createGame,
     findGameByCode, 
+    getDetailsGame,
+    saveMove,
+    setGameState,
     getGameStatus,
     startGame,
     forfeitGame,
