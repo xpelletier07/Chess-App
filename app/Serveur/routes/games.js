@@ -93,7 +93,7 @@ router.get('/history/:id', async (req, res) => {
 });
 
 router.post('/result', checkAuth, async (req, res) => {
-  const { result, endedBy, winnerId = null } = req.body;
+  const { result, endedBy, winnerId = null, player1Id = req.user.id, player2Id = null } = req.body;
   const allowedResults = ['Victoire', 'Défaite', 'Nulle', 'Abandon'];
   const allowedEndReasons = ['checkmate', 'forfeit', 'draw', 'stalemate'];
 
@@ -102,7 +102,7 @@ router.post('/result', checkAuth, async (req, res) => {
   }
 
   try {
-    const game = await repository.createGameResult(result, endedBy, winnerId);
+    const game = await repository.createGameResult(result, endedBy, winnerId, player1Id, player2Id);
 
     return res.status(201).json({
       game: {

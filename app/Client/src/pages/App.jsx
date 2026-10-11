@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { API_BASE_URL } from '../../config'
 import { useState } from "react";
@@ -51,6 +51,14 @@ function App() {
             <h1>Échec et App | {user}</h1>
           </div>
           <div className="level-right">
+            <Link className="button is-link is-light mr-2" to="/history">
+              <span className="icon"><i className="fas fa-history" /></span>
+              <span>Historique</span>
+            </Link>
+            {/* Point d'entrée vers le classement Elo depuis la page d'accueil. */}
+            <Link className="button is-link is-light mr-3" to="/classement">
+              Classement
+            </Link>
             <button className="button is-danger is-light" onClick={handleLogout}>
               Déconnexion
             </button>

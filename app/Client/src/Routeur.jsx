@@ -5,8 +5,10 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import App from "./pages/App.jsx";
 import Lobby from "./pages/Lobby.jsx";
+import Classement from "./pages/Classement.jsx";
 import { useState, useEffect } from "react";
 import ForfeitTest from "./pages/forfeit_test.jsx";
+import History from "./pages/History.jsx";
 
 // function isTokenExpired(token) {
 // 	const payload = JSON.parse(atob(token.split(".")[1]));
@@ -22,13 +24,22 @@ function Routeur() {
 					<Route path="/signup" element={<Signup />} />
 					<Route path="/" element={<ProtectedRoute><App /></ProtectedRoute>} />
 					<Route path="/lobby/:code" element={<ProtectedRoute><Lobby /></ProtectedRoute>} />
-					{/* /forfeit est une page de test pour l'abandon de partie. A supprimer plus tard.*/}
+					<Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+					{/*
+						/forfeit est une page de test pour l'abandon de partie. A supprimer plus tard.
+					*/}
 					<Route path="/forfeit" element={<ForfeitTest />} />
 
+					{/* Route protégée: seuls les utilisateurs authentifiés accèdent au classement. */}
+					<Route
+						path="/classement"
+						element={
+							<ProtectedRoute>
+								<Classement />
+							</ProtectedRoute>
+						}
+					/>
 
-					{/*
-						Insérer vos autres pages protégées ici
-					*/}
 					<Route
 						path="*"
 						element={<div className="section has-text-centered">Page non trouvée</div>}

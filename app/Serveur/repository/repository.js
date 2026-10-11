@@ -12,6 +12,8 @@ export {
     findHistoryGames,
     createGameResult
 } from "./gameRepository.js"
+// Le classement et les résultats partagent le dépôt des données associées aux parties.
+export { finishGame, getLeaderboard } from "./rankingRepository.js"
 export {
     createUser,
     findUserByEmail,
