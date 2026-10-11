@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import { API_BASE_URL } from '../../config'
+import { API_BASE_URL } from '../config'
 import { useState } from "react";
 
 function App() {
@@ -19,7 +19,7 @@ function App() {
   async function join(event) {
     event.preventDefault();
     try {
-      const reponse = await fetch(`${API_BASE_URL}/game/join/${code}`, {
+      const reponse = await fetch(`${API_BASE_URL}/games/join/${code}`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -31,12 +31,13 @@ function App() {
   async function create(event) {
     event.preventDefault()
     try {
-      const reponse = await fetch(`${API_BASE_URL}/game/newGame`, {
+      const reponse = await fetch(`${API_BASE_URL}/games/newGame`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       })
+      const data = await reponse.json()
       if (reponse.ok) {
-        navigate(`/lobby/:${reponse}`)
+        navigate(`/lobby/${data.game.code}`)
       }
     } catch (e) {
       setError(e.message)
@@ -44,57 +45,80 @@ function App() {
   }
 
   return (
-    <main className="screen">
+    <main className="section">
       <div className="container">
-        <div className="level">
+        <nav className="level mb-6">
           <div className="level-left">
-            <h1>Échec et App | {user}</h1>
+            <h1 className="title is-3 mb-0">
+              Échec et App | {user?.nom_utilisateur}
+            </h1>
           </div>
           <div className="level-right">
-            <Link className="button is-link is-light mr-2" to="/history">
-              <span className="icon"><i className="fas fa-history" /></span>
-              <span>Historique</span>
-            </Link>
-            {/* Point d'entrée vers le classement Elo depuis la page d'accueil. */}
-            <Link className="button is-link is-light mr-3" to="/classement">
-              Classement
-            </Link>
-            <button className="button is-danger is-light" onClick={handleLogout}>
-              Déconnexion
-            </button>
+            <div className="buttons">
+              <Link className="button is-link is-light mr-2" to="/history">
+                <span className="icon"><i className="fas fa-history" /></span>
+                <span>Historique</span>
+              </Link>
+              {/* Point d'entrée vers le classement Elo depuis la page d'accueil. */}
+              <Link className="button is-link is-light mr-3" to="/classement">
+                Classement
+              </Link>
+              <button className="button is-danger is-light" onClick={handleLogout}>
+                Déconnexion
+              </button>
+            </div>
+          </div>
+        </nav>
+
+        {error && (
+          <div className="notification is-danger is-light">{error}</div>
+        )}
+
+        {/* Deux choix exclusifs, côte à côte : on join OU on crée une partie. */}
+        <div className="columns is-vcentered is-centered">
+          <div className="column is-5">
+            <section className="box">
+              <h2 className="title is-4">Rejoindre une partie</h2>
+              <p className="subtitle is-6">Vous avez reçu un code de partie ?</p>
+              <form onSubmit={join}>
+                <div className="field">
+                  <div className="control">
+                    <input
+                      className="input"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value)}
+                      placeholder="Code de partie"
+                      inputMode="numeric"
+                    />
+                  </div>
+                </div>
+                <div className="control">
+                  <button type="submit" className="button is-light is-primary">Rejoindre la partie</button>
+                </div>
+              </form>
+            </section>
+          </div>
+
+          <div className="column is-narrow has-text-centered">
+            <span className="tag is-medium">ou</span>
+          </div>
+
+          <div className="column is-5">
+            <section className="box">
+              <h2 className="title is-4">Créer une nouvelle partie</h2>
+              <p className="subtitle is-6">
+                Obtenir un code pour inviter un autre joueur de votre choix
+              </p>
+              <div className="control">
+                <button onClick={create} className="button is-light is-primary">
+                  Obtenir son code
+                </button>
+              </div>
+            </section>
           </div>
         </div>
       </div>
-
-      {/* Deux choix exclusifs, côte à côte : on join OU on crée une partie. */}
-      <div className="home-choices">
-        <section className="card">
-          <h2>Rejoindre une partie</h2>
-          <p>Vous avez reçu un code de partie ?</p>
-          <form onSubmit={join}>
-            <input
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              placeholder="Code de partie"
-              inputMode="numeric"
-            />
-            <button type="submit">Rejoindre la partie</button>
-          </form>
-        </section>
-
-        <p className="or">ou</p>
-
-        <section className="card">
-          <h2>Créer une nouvelle partie</h2>
-          <p>Obtenir un code pour inviter un autre joueur de votre choix</p>
-          <button onClick={create}>
-            Obtenir son code
-          </button>
-        </section>
-      </div>
-
-      {error && <p className="error">{error}</p>}
-    </main >
+    </main>
   );
 }
 

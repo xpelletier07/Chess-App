@@ -2,10 +2,7 @@ import { pool } from "./db.js"
 
 // logique pour créer une nouvelle partie
 export async function createGame(code, creatorId) {
-    const { rows } = await pool.query(
-        await repository.pool.query(`insert into game (creator_id, code) 
-            values ($1, $2)`, [creatorId, code])
-    )
+    const { rows } = await pool.query(`insert into game (creator_id, code) values ($1, $2)`, [creatorId, code])
     return rows[0]
 }
 
@@ -15,36 +12,6 @@ export async function findGameByCode(code) {
     return rows[0]
 }
 
-export async function findHistoryGames() {
-    const { rows } = await pool.query(
-        'select * from history_games order by created_at desc'
-    )
-    return rows
-}
-
-export async function createGameResult(result, endedBy, winnerId = null) {
-    const { rows } = await pool.query(
-        `insert into history_games (winner_id, result, ended_by)
-         values ($1, $2, $3)
-         returning id, result, ended_by, created_at`,
-        [winnerId, result, endedBy]
-    )
-    return rows[0]
-}
-
-export async function findHistoryGames() {
-    const { rows } = await pool.query(
-        `select history_games.*,
-                player1.username as player1_name,
-                player2.username as player2_name
-         from history_games
-         left join users as player1 on player1.id = history_games.player1_id
-         left join users as player2 on player2.id = history_games.player2_id
-         order by history_games.created_at desc`
-    )
-    return rows
-}
-
 export async function createGameResult(result, endedBy, winnerId = null, player1Id = null, player2Id = null) {
     const { rows } = await pool.query(
         `insert into history_games (winner_id, result, ended_by, player1_id, player2_id)
@@ -68,32 +35,6 @@ export async function findHistoryGames() {
     return rows
 }
 
-export async function createGameResult(result, endedBy, winnerId = null, player1Id = null, player2Id = null) {
-    const { rows } = await pool.query(
-        `insert into history_games (winner_id, result, ended_by, player1_id, player2_id)
-         values ($1, $2, $3, $4, $5)
-         returning id, result, ended_by, player1_id, player2_id, created_at`,
-        [winnerId, result, endedBy, player1Id, player2Id]
-    )
-    return rows[0]
-}
-
-export async function findHistoryGames() {
-    const { rows } = await pool.query(
-        'select * from history_games order by created_at desc'
-    )
-    return rows
-}
-
-export async function createGameResult(result, endedBy, winnerId = null) {
-    const { rows } = await pool.query(
-        `insert into history_games (winner_id, result, ended_by)
-         values ($1, $2, $3)
-         returning id, result, ended_by, created_at`,
-        [winnerId, result, endedBy]
-    )
-    return rows[0]
-}
 
 export async function joinGame(code, playerId) {
     // Une connexion réservée permet de verrouiller et modifier la ligne dans une seule transaction.
@@ -145,4 +86,8 @@ export async function joinGame(code, playerId) {
         // Libère la connexion réservée, y compris en cas de retour anticipé.
         client.release()
     }
+}
+
+export async function changeGameState(newState, gameId) {
+    await pool.query('update game set state = $1 where id = $2', [newState, gameId])
 }

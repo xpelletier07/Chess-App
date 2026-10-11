@@ -15,7 +15,7 @@ router.post("/newGame", checkAuth, async (req, res) => {
         return res.status(201).json({ game });
     }
     catch (error) {
-        console.error("Erreur dans POST /game/newGame", error);
+        console.error("Erreur dans POST /games/newGame", error);
         return res.status(500).json({ error: "Erreur serveur" });
     }
 })
@@ -61,7 +61,7 @@ router.post("/join/:code", checkAuth, async (req, res) => {
         return res.status(200).json({ game: rows[0] });
     }
       catch (error) {
-        console.error("Erreur dans POST /game/join", error);
+        console.error("Erreur dans POST /games/join", error);
         return res.status(500).json({ error: "Erreur serveur" });
     }
 })
@@ -87,7 +87,7 @@ router.get('/history/:id', async (req, res) => {
     return res.json({ game: game.rows[0] });
   }
   catch (error) {
-    console.error("Erreur dans GET /game/history/:id", error);
+    console.error("Erreur dans GET /games/history/:id", error);
     return res.status(500).json({ error: 'Erreur serveur' });
   }
 });
