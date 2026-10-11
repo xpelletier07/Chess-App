@@ -1,5 +1,5 @@
 import express from "express"
-import gameRouter from "./joinGame.js"
+import gamesRouter from "./games.js"
 import authRouter from "./auth.js"
 import rankingRouter from "./ranking.js"
 
@@ -8,7 +8,7 @@ import rankingRouter from "./ranking.js"
 
 const apiRouter = express.Router()
 
-apiRouter.use("/game", gameRouter)
+apiRouter.use("/games", gamesRouter)
 apiRouter.use("/auth", authRouter)
 // API consommée par la page de classement.
 apiRouter.use("/ranking", rankingRouter)
