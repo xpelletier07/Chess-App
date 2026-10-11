@@ -110,6 +110,11 @@ export async function findHistoryGames(playerId) {
     const { rows } = await pool.query(
     `select history_games.*,
         row_number() over (order by history_games.created_at asc, history_games.id asc) as player_game_number,
+                case
+                    when history_games.result = 'Abandon' and history_games.winner_id = $1 then 'Victoire'
+                    when history_games.result = 'Abandon' and history_games.winner_id is not null then 'Défaite'
+                    else null
+                end as player_outcome,
                 player1.username as player1_name,
                 player2.username as player2_name
          from history_games

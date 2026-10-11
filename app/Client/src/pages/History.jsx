@@ -16,6 +16,12 @@ function getResultClass(result) {
   return 'is-warning'
 }
 
+function getResultLabel(game) {
+  return game.player_outcome
+    ? `${game.result} · ${game.player_outcome}`
+    : game.result
+}
+
 function getPlayerName(name, id) {
   return name || (id ? `Joueur #${id}` : 'Joueur non identifié')
 }
@@ -81,14 +87,18 @@ export default function History() {
 
         {!loading && !error && games.length > 0 && (
           <div className="history-grid">
-            {games.map((game) => (
-              <article className="history-card box" key={game.id}>
+            {games.map((game) => {
+              const resultLabel = getResultLabel(game)
+              const resultClass = getResultClass(game.player_outcome || game.result)
+
+              return (
+                <article className="history-card box" key={game.id}>
                 <div className="history-card-top">
                   <div>
                     <div className="history-game-number">Partie #{game.player_game_number}</div>
                     <div className="history-game-id">ID de partie : {game.id}</div>
                   </div>
-                  <span className={`tag ${getResultClass(game.result)}`}>{game.result}</span>
+                  <span className={`tag ${resultClass}`}>{resultLabel}</span>
                 </div>
                 <p className="history-date">{formatDate(game.created_at)}</p>
                 <div className="history-players" aria-label="Joueurs de la partie">
@@ -113,8 +123,9 @@ export default function History() {
                   <strong>{game.ended_by}</strong>
                 </div>
                 <span className="history-link">Partie terminée</span>
-              </article>
-            ))}
+                </article>
+              )
+            })}
           </div>
         )}
       </div>
