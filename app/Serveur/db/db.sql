@@ -31,6 +31,6 @@ CREATE TABLE IF NOT EXISTS game (
   -- Le code à six chiffres affiché par le créateur de la partie.
   code TEXT NOT NULL UNIQUE,
   -- 'lobby' | 'en cours' | 'finished'
-  state TEXT NOT NULL DEFAULT 'lobby'
+  state TEXT NOT NULL DEFAULT 'lobby',
   created_at timestamp default current_timestamp
 );
