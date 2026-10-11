@@ -7,6 +7,8 @@ export { pool } from "./db.js"
 export {
     createGame,
     findGameByCode, 
+    getGameStatus,
+    startGame,
     joinGame, 
     changeGameState,
     findHistoryGames,

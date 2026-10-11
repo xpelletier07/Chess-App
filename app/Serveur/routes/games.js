@@ -28,43 +28,33 @@ router.post("/join/:code", checkAuth, async (req, res) => {
 
         const code = req.params.code
         const playerId = req.user.id;
-        // premier check pour voir si la game existe 
-        const game = await repository.findGameByCode(code);
-
-        if (!game) {
-            return res.status(404).json({ error: "Partie introuvable" });
-        }
-        // erreur si on essaye de join la game qui n'est plus dans le lobby, aka game en cours ou game finie
-        if (game.state !== "lobby") {
-            return res.status(409).json({ error: "Impossible de rejoindre une partie en cours ou terminée" });
-        }
-        // erreur si qqun veut join la game qu'il vient de créer lui meme
-        if (game.creator_id === playerId) {
-            return res.status(409).json({ error: "Impossible de rejoindre la partie que vous avez créée" });
-        }
-        if (game.joiner_id !== null) {
-            return res.status(409).json({ error: "Impossible de rejoindre la partie, deux joueurs sont déjà connectés" });
+        const result = await repository.joinGame(code, playerId);
+        if (result.error) {
+          return res.status(result.status).json({ error: result.error });
         }
 
-        const { rows } = await repository.pool.query(
-            `UPDATE game
-             SET joiner_id = $1, state = 'en cours'
-             WHERE code = $2 AND state = 'lobby' AND joiner_id IS NULL
-             RETURNING *`,
-            [playerId, code]
-        );
-
-        if (rows.length === 0) {
-            return res.status(409).json({ error: "La partie vient d'être rejointe par un autre joueur" });
-        }
-
-        return res.status(200).json({ game: rows[0] });
+        return res.status(200).json(result);
     }
       catch (error) {
         console.error("Erreur dans POST /games/join", error);
         return res.status(500).json({ error: "Erreur serveur" });
     }
 })
+
+router.post('/:code/start', checkAuth, async (req, res) => {
+  try {
+    const game = await repository.startGame(req.params.code, req.user.id);
+    if (!game) {
+      return res.status(409).json({
+        error: 'Seul le créateur peut démarrer une partie complète'
+      });
+    }
+    return res.json({ game });
+  } catch (error) {
+    console.error('Erreur dans POST /games/:code/start', error);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
 
 router.get('/history', async (req, res) => {
   try {
@@ -88,6 +78,19 @@ router.get('/history/:id', async (req, res) => {
   }
   catch (error) {
     console.error("Erreur dans GET /games/history/:id", error);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+router.get('/:code', checkAuth, async (req, res) => {
+  try {
+    const game = await repository.getGameStatus(req.params.code);
+    if (!game) {
+      return res.status(404).json({ error: 'Partie introuvable' });
+    }
+    return res.json({ game });
+  } catch (error) {
+    console.error('Erreur dans GET /games/:code', error);
     return res.status(500).json({ error: 'Erreur serveur' });
   }
 });

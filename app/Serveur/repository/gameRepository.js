@@ -12,6 +12,32 @@ export async function findGameByCode(code) {
     return rows[0]
 }
 
+export async function getGameStatus(code) {
+    const { rows } = await pool.query(
+        `select game.*, creator.username as creator_username, joiner.username as joiner_username
+         from game
+         join users as creator on creator.id = game.creator_id
+         left join users as joiner on joiner.id = game.joiner_id
+         where game.code = $1`,
+        [code]
+    )
+    return rows[0]
+}
+
+export async function startGame(code, creatorId) {
+    const { rows } = await pool.query(
+        `update game
+         set state = 'en cours'
+         where code = $1
+           and creator_id = $2
+           and joiner_id is not null
+           and state = 'lobby'
+         returning id, creator_id, joiner_id, code, state`,
+        [code, creatorId]
+    )
+    return rows[0]
+}
+
 export async function createGameResult(result, endedBy, winnerId = null, player1Id = null, player2Id = null) {
     const { rows } = await pool.query(
         `insert into history_games (winner_id, result, ended_by, player1_id, player2_id)
@@ -69,9 +95,9 @@ export async function joinGame(code, playerId) {
         }
 
         // L'arrivée du second joueur fait passer la partie du lobby à l'état en cours.
-        const { rows: updatedRows } = await client.query(
+           const { rows: updatedRows } = await client.query(
             `update game
-             set joiner_id = $1, state = 'en cours'
+               set joiner_id = $1
              where id = $2
              returning id, creator_id, joiner_id, code, state`,
             [playerId, game.id]

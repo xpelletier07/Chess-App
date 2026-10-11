@@ -18,11 +18,27 @@ function App() {
 
   async function join(event) {
     event.preventDefault();
+    setError(null);
+
+    const gameCode = code.trim();
+    if (!gameCode) {
+      setError('Veuillez entrer un code de partie.');
+      return;
+    }
+
     try {
-      const reponse = await fetch(`${API_BASE_URL}/games/join/${code}`, {
-        method: 'PUT',
+      const reponse = await fetch(`${API_BASE_URL}/games/join/${gameCode}`, {
+        method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       })
+
+      const data = await reponse.json();
+      if (!reponse.ok) {
+        setError(data.error || 'Impossible de rejoindre la partie.');
+        return;
+      }
+
+      navigate(`/lobby/${data.game.code}`);
     } catch (e) {
       setError(e.message);
     }
