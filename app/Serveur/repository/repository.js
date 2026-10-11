@@ -9,6 +9,7 @@ export {
     findGameByCode, 
     getGameStatus,
     startGame,
+    forfeitGame,
     joinGame, 
     changeGameState,
     findHistoryGames,

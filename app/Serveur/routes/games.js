@@ -56,6 +56,19 @@ router.post('/:code/start', checkAuth, async (req, res) => {
   }
 });
 
+router.post('/:code/forfeit', checkAuth, async (req, res) => {
+  try {
+    const result = await repository.forfeitGame(req.params.code, req.user.id);
+    if (result.error) {
+      return res.status(result.status).json({ error: result.error });
+    }
+    return res.json(result);
+  } catch (error) {
+    console.error('Erreur dans POST /games/:code/forfeit', error);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 router.get('/history', async (req, res) => {
   try {
     const games = await repository.findHistoryGames();

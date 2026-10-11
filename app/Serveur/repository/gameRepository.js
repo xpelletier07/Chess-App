@@ -14,10 +14,20 @@ export async function findGameByCode(code) {
 
 export async function getGameStatus(code) {
     const { rows } = await pool.query(
-        `select game.*, creator.username as creator_username, joiner.username as joiner_username
+        `select game.*, creator.username as creator_username, joiner.username as joiner_username,
+                result.result as last_result,
+                result.ended_by as last_ended_by,
+                result.winner_id as last_winner_id
          from game
          join users as creator on creator.id = game.creator_id
          left join users as joiner on joiner.id = game.joiner_id
+         left join lateral (
+             select h.result, h.ended_by, h.winner_id
+             from history_games h
+             where h.game_id = game.id
+             order by h.id desc
+             limit 1
+         ) as result on true
          where game.code = $1`,
         [code]
     )
@@ -36,6 +46,54 @@ export async function startGame(code, creatorId) {
         [code, creatorId]
     )
     return rows[0]
+}
+
+export async function forfeitGame(code, playerId) {
+    const client = await pool.connect()
+
+    try {
+        await client.query("begin")
+        const { rows } = await client.query(
+            `select id, creator_id, joiner_id, state
+             from game
+             where code = $1
+             for update`,
+            [code]
+        )
+        const game = rows[0]
+
+        if (!game) {
+            await client.query("rollback")
+            return { error: "Partie introuvable", status: 404 }
+        }
+
+        const players = [Number(game.creator_id), Number(game.joiner_id)]
+        if (game.state !== "en cours" || !players.includes(Number(playerId))) {
+            await client.query("rollback")
+            return { error: "Vous ne pouvez pas abandonner cette partie", status: 409 }
+        }
+
+        const winnerId = players.find((id) => id !== Number(playerId))
+        const { rows: historyRows } = await client.query(
+            `insert into history_games
+                (game_id, player1_id, player2_id, winner_id, result, ended_by)
+             values ($1, $2, $3, $4, 'Abandon', 'forfeit')
+             returning id, game_id, player1_id, player2_id, winner_id, result, ended_by, created_at`,
+            [game.id, game.creator_id, game.joiner_id, winnerId]
+        )
+        await client.query("update game set state = 'finished' where id = $1", [game.id])
+        await client.query("commit")
+
+        return {
+            game: historyRows[0],
+            message: "La partie a été enregistrée comme un abandon."
+        }
+    } catch (error) {
+        await client.query("rollback")
+        throw error
+    } finally {
+        client.release()
+    }
 }
 
 export async function createGameResult(result, endedBy, winnerId = null, player1Id = null, player2Id = null) {
