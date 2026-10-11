@@ -1,8 +1,10 @@
-import pg from 'pg';
+import pg from "pg";
 
-const { Pool, types } = pg;
+const { Pool } = pg;
+const { DATABASE_URL } = process.env;
 
-const DATABASE_URL = 'postgres://postgres:postgres@db:5432/chess_app'
+if (!DATABASE_URL) {
+    throw new Error("La variable d'environnement DATABASE_URL est requise");
+}
 
-export const pool = new Pool({ connectionString: DATABASE_URL})
-
+export const pool = new Pool({ connectionString: DATABASE_URL });

@@ -25,8 +25,8 @@ export default function Signup() {
 
       const data = await response.json()
       setEmailError(data.exists ? 'Cet email est déjà utilisé' : '')
-    } catch (err) {
-      // Silencieux : la vérification finale se refera de toute façon au submit
+    } catch {
+      setEmailError('Impossible de vérifier cet e-mail pour le moment')
     }
   }
 
@@ -66,7 +66,7 @@ export default function Signup() {
       }
 
       navigate('/login')
-    } catch (err) {
+    } catch {
       setError('Impossible de contacter le serveur')
     } finally {
       setLoading(false)

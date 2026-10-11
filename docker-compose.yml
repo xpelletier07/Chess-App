@@ -21,7 +21,7 @@ services:
       - "3000:3000"
     environment:
       PORT: 3000
-      DATABASE_URL: postgres://postgres:postgres@db:5432/chess_app
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/chess_app
       JWT_SECRET: cle-locale-chess-app
     volumes:
       - ./app/Serveur:/app
@@ -43,6 +43,8 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./app/Serveur/db/db.sql:/docker-entrypoint-initdb.d/db.sql:ro
+      - ./app/Serveur/db/seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d chess_app"]
       interval: 5s
