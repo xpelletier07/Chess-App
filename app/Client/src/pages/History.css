@@ -45,7 +45,7 @@
 
 .history-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -167,6 +167,17 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.history-card-top {
+  align-items: flex-start;
+}
+
+.history-card-top .tag {
+  max-width: 48%;
+  overflow-wrap: anywhere;
+  text-align: center;
+  white-space: normal;
 }
 
 .history-game-number {
@@ -315,13 +326,13 @@
   }
 }
 
-@media (max-width: 800px) {
+@media (max-width: 1000px) {
   .history-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 650px) {
   .history-grid {
     grid-template-columns: 1fr;
   }
