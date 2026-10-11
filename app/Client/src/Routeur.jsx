@@ -4,9 +4,9 @@ import ProtectedRoute from "./auth/ProtectedRoute";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import App from "./pages/App.jsx";
+import Lobby from "./pages/Lobby.jsx";
 import Game from "./pages/Game.jsx";
 import Classement from "./pages/Classement.jsx";
-import { useState, useEffect } from "react";
 import ForfeitTest from "./pages/forfeit_test.jsx";
 import History from "./pages/History.jsx";
 
@@ -22,30 +22,10 @@ function Routeur() {
 				<Routes>
 					<Route path="/login" element={<Login />} />
 					<Route path="/signup" element={<Signup />} />
-					<Route
-						path="/"
-						element={
-							<ProtectedRoute>
-								<App />
-							</ProtectedRoute>
-						}
-					/>
-					<Route
-						path="/history"
-						element={
-							<ProtectedRoute>
-								<History />
-							</ProtectedRoute>
-						}
-					/>
-										<Route
-						path="/game/:gameId"
-						element={
-							<ProtectedRoute>
-								<Game />
-							</ProtectedRoute>
-						}
-					/>
+					<Route path="/" element={<ProtectedRoute><App /></ProtectedRoute>} />
+					<Route path="/lobby/:code" element={<ProtectedRoute><Lobby /></ProtectedRoute>} />
+					<Route path="/game/:code" element={<ProtectedRoute><Game /></ProtectedRoute>} />
+					<Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
 					{/*
 						/forfeit est une page de test pour l'abandon de partie. A supprimer plus tard.
 					*/}

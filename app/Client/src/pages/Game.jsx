@@ -1,141 +1,109 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useParams } from "react-router-dom";
-import { Chess } from 'chess.js'
-import { Chessboard } from "react-chessboard";
-import { API_BASE_URL } from "../config.js";
-
-async function api(path, method = "GET", body) {
-	const res = await fetch(API_BASE_URL + path, {
-		method,
-		credentials: "include", // si ton auth est en JWT dans un header, remplace par Authorization
-		headers: { "Content-Type": "application/json" },
-		body: body ? JSON.stringify(body) : undefined,
-	});
-	const data = await res.json();
-	if (!res.ok) throw new Error(data.error || "Request failed");
-	return data;
-}
+import { useEffect, useState } from "react"
+import { Link, useParams } from "react-router-dom"
+import Forfeit from "../components/forfeit.jsx"
+import { API_BASE_URL } from "../config"
+import { useAuth } from "../auth/AuthContext"
 
 export default function Game() {
-	const { code } = useParams();
-	const [state, setState] = useState(null);
-	const [error, setError] = useState("");
-	const versionRef = useRef(null); // dernière version reçue du serveur
-	const pendingRef = useRef(false); // true pendant qu'un coup est envoyé
+    const { code } = useParams()
+    const { token, user } = useAuth()
+    const [gameResult, setGameResult] = useState(null)
+    const [gameStatus, setGameStatus] = useState(null)
+    const [savingResult, setSavingResult] = useState(false)
+    const [error, setError] = useState("")
 
-	// applique la réponse du serveur (ignore les réponses { changed: false })
-	const apply = useCallback((data) => {
-		if (data.changed === false) return;
-		versionRef.current = data.version;
-		setState(data);
-	}, []);
+    useEffect(() => {
+        let active = true
 
-	const poll = useCallback(async () => {
-		// pendant l'envoi d'un coup on ne poll pas, sinon l'ancien état écraserait le coup affiché
-		if (pendingRef.current) return;
-		try {
-			const since = versionRef.current;
-			const data = await api(
-				`/games/${code}${since !== null ? `?since=${since}` : ""}`,
-			);
-			if (!pendingRef.current) apply(data);
-			setError("");
-		} catch (e) {
-			setError(e.message);
-		}
-	}, [code, apply]);
+        async function loadGameStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/games/${code}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                const data = await response.json()
+                if (!response.ok) throw new Error(data.error || "Impossible de récupérer la partie")
+                if (active) setGameStatus(data.game)
+            } catch (requestError) {
+                if (active) setError(requestError.message)
+            }
+        }
 
-	// poll toutes les secondes, on s'arrête quand la partie est finie
-	useEffect(() => {
-		if (state?.state === "finished") return;
-		poll();
-		const timer = setInterval(poll, 1000);
-		return () => clearInterval(timer);
-	}, [poll, state?.state]);
+        loadGameStatus()
+        if (gameStatus?.state === "finished") return () => { active = false }
 
-	function onPieceDrop({ sourceSquare, targetSquare }) {
-		// targetSquare est null si la pièce est lâchée hors du plateau
-		if (!targetSquare || !state) return false;
-		if (state.state !== "en_cours") return false;
-		if (state.turn !== state.color) return false; // pas ton tour (ou spectateur)
+        const interval = setInterval(loadGameStatus, 2000)
+        return () => {
+            active = false
+            clearInterval(interval)
+        }
+    }, [code, token, gameStatus?.state])
 
-		// on vérifie la légalité en local pour que la pièce revienne tout de suite si illégal
-		const local = new Chess(state.fen);
-		try {
-			local.move({ from: sourceSquare, to: targetSquare, promotion: "q" });
-		} catch {
-			return false;
-		}
+    useEffect(() => {
+        if (!gameStatus || gameStatus.state !== "finished" || gameResult) return
 
-		// mise à jour optimiste, puis confirmation du serveur
-		pendingRef.current = true;
-		setState({ ...state, fen: local.fen(), turn: local.turn() });
+        const isWinner = Number(gameStatus.last_winner_id) === Number(user?.id)
+        setGameResult({
+            message: isWinner
+                ? "Victoire ! Votre adversaire a abandonné la partie."
+                : "La partie a été enregistrée comme un abandon.",
+            isWinner
+        })
+    }, [gameStatus, gameResult, user])
 
-		api(`/games/${code}/move`, "POST", {
-			from: sourceSquare,
-			to: targetSquare,
-			promotion: "q",
-		})
-			.then(apply)
-			.catch((e) => {
-				setError(e.message);
-				versionRef.current = null; // force une resynchronisation complète
-			})
-			.finally(() => {
-				pendingRef.current = false;
-				poll();
-			});
+    async function forfeit() {
+        if (savingResult || gameResult) return
 
-		return true;
-	}
+        setSavingResult(true)
+        setError("")
+        try {
+            const response = await fetch(`${API_BASE_URL}/games/${code}/forfeit`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            const data = await response.json()
+            if (!response.ok) throw new Error(data.error || "Impossible d'enregistrer l'abandon.")
+            setGameResult(data)
+        } catch (requestError) {
+            setError(requestError.message)
+        } finally {
+            setSavingResult(false)
+        }
+    }
 
-	if (!state) return <p>{error || "Chargement..."}</p>;
+    return (
+        <main className="hero is-fullheight">
+            <div className="hero-body">
+                <div className="container has-text-centered">
+                    <section className="box">
+                        <h1 className="title is-2">Partie en cours</h1>
+                        <p className="subtitle is-5">La partie {code} est prête.</p>
+                        <div className="notification is-info is-light">
+                            L'échiquier sera disponible ici.
+                        </div>
+                        {error && <div className="notification is-danger is-light">{error}</div>}
+                        <Forfeit onForfeit={forfeit} disabled={savingResult || Boolean(gameResult)} />
+                        {savingResult && <p className="mt-4">Enregistrement de l'abandon...</p>}
+                    </section>
+                </div>
+            </div>
 
-	let message;
-	if (state.state === "lobby") {
-		message = `En attente d'un adversaire... code : ${state.code}`;
-	} else if (state.state === "finished") {
-		message =
-			state.result === "draw"
-				? "Partie nulle."
-				: `Partie terminée : les ${state.result === "white" ? "blancs" : "noirs"} gagnent.`;
-	} else {
-		message = state.turn === state.color ? "À toi de jouer" : "Tour de l'adversaire";
-	}
-
-	const highlight = { backgroundColor: "rgba(255, 255, 0, 0.4)" };
-	const squareStyles = state.lastMove
-		? { [state.lastMove.from]: highlight, [state.lastMove.to]: highlight }
-		: {};
-
-	const chessboardOptions = {
-		position: state.fen,
-		onPieceDrop,
-		boardOrientation: state.color === "b" ? "black" : "white",
-		squareStyles,
-		id: "main-board",
-	};
-
-	return (
-		<div style={{ maxWidth: "600px", margin: "0 auto" }}>
-			<h2>Partie {state.code}</h2>
-			<p>
-				{state.color
-					? `Tu joues les ${state.color === "w" ? "blancs" : "noirs"}. `
-					: "Spectateur. "}
-				{message}
-			</p>
-			{error && <p style={{ color: "red" }}>{error}</p>}
-
-			<Chessboard options={chessboardOptions} />
-
-			<ol style={{ marginTop: "10px" }}>
-				{Array.from({ length: Math.ceil(state.history.length / 2) }, (_, i) => (
-					<li key={i}>
-						{state.history[2 * i]} {state.history[2 * i + 1] ?? ""}
-					</li>
-				))}
-			</ol>
-		</div>
-	);
+            {gameResult && (
+                <div className="modal is-active" role="dialog" aria-modal="true" aria-labelledby="game-result-title">
+                    <div className="modal-background" />
+                    <div className="modal-card">
+                        <header className="modal-card-head">
+                            <p className="modal-card-title" id="game-result-title">Partie terminée</p>
+                        </header>
+                        <section className="modal-card-body">
+                            <p>{gameResult.message}</p>
+                            <p className="is-size-7 mt-3">L'abandon a été enregistré dans l'historique.</p>
+                        </section>
+                        <footer className="modal-card-foot">
+                            <Link className="button" to="/">Retour à l'accueil</Link>
+                        </footer>
+                    </div>
+                </div>
+            )}
+        </main>
+    )
 }

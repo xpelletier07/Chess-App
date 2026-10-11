@@ -6,17 +6,21 @@ export { pool } from "./db.js";
 
 export { saveMove, setGameState } from "./playRepository.js";
 export {
-	createGame,
-	findGameByCode,
-	joinGame,
-	findHistoryGames,
-	createGameResult,
-} from "./gameRepository.js";
+    createGame,
+    findGameByCode, 
+    getGameStatus,
+    startGame,
+    forfeitGame,
+    joinGame, 
+    changeGameState,
+    findHistoryGames,
+    createGameResult
+} from "./gameRepository.js"
 // Le classement et les résultats partagent le dépôt des données associées aux parties.
 export { finishGame, getLeaderboard } from "./rankingRepository.js";
 export {
 	createUser,
 	findUserByEmail,
 	findUserByEmailOrUsername,
-	userEmailExists,
-} from "./userRepository.js";
+	userEmailExists
+} from "./userRepository.js"
