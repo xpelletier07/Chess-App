@@ -6,8 +6,12 @@ export { pool } from "./db.js"
 
 export {
     createGame,
-    findGameByCode,
-    joinGame,
+    findGameByCode, 
+    getGameStatus,
+    startGame,
+    forfeitGame,
+    joinGame, 
+    changeGameState,
     findHistoryGames,
     createGameResult
 } from "./gameRepository.js"
