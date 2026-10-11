@@ -11,6 +11,8 @@ create table if not exists history_games (
     player1_id int references users(id),
     player2_id int references users(id),
     winner_id int references users(id),
+    result varchar(20) not null,
+    ended_by varchar(20) not null,
     created_at timestamp default current_timestamp
 );
 
