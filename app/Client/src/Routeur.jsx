@@ -5,6 +5,15 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import App from "./pages/App.jsx";
 import Game from "./pages/Game.jsx";
+import Classement from "./pages/Classement.jsx";
+import { useState, useEffect } from "react";
+import ForfeitTest from "./pages/forfeit_test.jsx";
+import History from "./pages/History.jsx";
+
+// function isTokenExpired(token) {
+// 	const payload = JSON.parse(atob(token.split(".")[1]));
+// 	return payload.exp * 1000 < Date.now(); // exp is in seconds
+// }
 
 function Routeur() {
 	return (
@@ -22,6 +31,14 @@ function Routeur() {
 						}
 					/>
 					<Route
+						path="/history"
+						element={
+							<ProtectedRoute>
+								<History />
+							</ProtectedRoute>
+						}
+					/>
+										<Route
 						path="/game/:gameId"
 						element={
 							<ProtectedRoute>
@@ -30,8 +47,20 @@ function Routeur() {
 						}
 					/>
 					{/*
-						Insérer vos autres pages protégées ici
+						/forfeit est une page de test pour l'abandon de partie. A supprimer plus tard.
 					*/}
+					<Route path="/forfeit" element={<ForfeitTest />} />
+
+					{/* Route protégée: seuls les utilisateurs authentifiés accèdent au classement. */}
+					<Route
+						path="/classement"
+						element={
+							<ProtectedRoute>
+								<Classement />
+							</ProtectedRoute>
+						}
+					/>
+
 					<Route
 						path="*"
 						element={<div className="section has-text-centered">Page non trouvée</div>}

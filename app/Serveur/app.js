@@ -2,7 +2,11 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import chess from "chess.js";
+import pg from "pg";
 import apiRouter from "./routes/Router.js";
+
+const DATABASE_URL = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/chess_app";
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
