@@ -7,9 +7,12 @@ export { pool } from "./db.js"
 export {
     createGame,
     findGameByCode,
+    joinGame,
     findHistoryGames,
     createGameResult
 } from "./gameRepository.js"
+// Le classement et les résultats partagent le dépôt des données associées aux parties.
+export { finishGame, getLeaderboard } from "./rankingRepository.js"
 export {
     createUser,
     findUserByEmail,
