@@ -106,7 +106,7 @@ export async function createGameResult(result, endedBy, winnerId = null, player1
     return rows[0]
 }
 
-export async function findHistoryGames() {
+export async function findHistoryGames(playerId) {
     const { rows } = await pool.query(
         `select history_games.*,
                 player1.username as player1_name,
@@ -114,7 +114,10 @@ export async function findHistoryGames() {
          from history_games
          left join users as player1 on player1.id = history_games.player1_id
          left join users as player2 on player2.id = history_games.player2_id
+         where history_games.player1_id = $1
+            or history_games.player2_id = $1
          order by history_games.created_at desc`
+        , [playerId]
     )
     return rows
 }

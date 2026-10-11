@@ -32,7 +32,10 @@ export default function History() {
   useEffect(() => {
     async function loadHistory() {
       try {
-        const response = await fetch(`${API_BASE_URL}/games/history`)
+        const token = localStorage.getItem('token')
+        const response = await fetch(`${API_BASE_URL}/games/history`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         const data = await response.json()
 
         if (!response.ok) {

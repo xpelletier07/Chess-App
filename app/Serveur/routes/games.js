@@ -69,9 +69,9 @@ router.post('/:code/forfeit', checkAuth, async (req, res) => {
   }
 });
 
-router.get('/history', async (req, res) => {
+router.get('/history', checkAuth, async (req, res) => {
   try {
-    const games = await repository.findHistoryGames();
+    const games = await repository.findHistoryGames(req.user.id);
     return res.json({ games });
   } catch (error) {
     return res.status(500).json({ error: 'Erreur lors de la récupération des parties' });
