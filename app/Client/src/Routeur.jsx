@@ -7,6 +7,7 @@ import App from "./pages/App.jsx";
 import Classement from "./pages/Classement.jsx";
 import { useState, useEffect } from "react";
 import ForfeitTest from "./pages/forfeit_test.jsx";
+import History from "./pages/History.jsx";
 
 // function isTokenExpired(token) {
 // 	const payload = JSON.parse(atob(token.split(".")[1]));
@@ -25,6 +26,14 @@ function Routeur() {
 						element={
 							<ProtectedRoute>
 								<App />
+							</ProtectedRoute>
+						}
+					/>
+					<Route
+						path="/history"
+						element={
+							<ProtectedRoute>
+								<History />
 							</ProtectedRoute>
 						}
 					/>

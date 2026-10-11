@@ -20,6 +20,10 @@ function App() {
             </h1>
           </div>
           <div className="level-right">
+            <Link className="button is-link is-light mr-2" to="/history">
+              <span className="icon"><i className="fas fa-history" /></span>
+              <span>Historique</span>
+            </Link>
             {/* Point d'entrée vers le classement Elo depuis la page d'accueil. */}
             <Link className="button is-link is-light mr-3" to="/classement">
               Classement
