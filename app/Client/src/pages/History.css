@@ -2,6 +2,7 @@
   min-height: 100vh;
   background: #f4f4f8;
   color: #111827;
+  color-scheme: light;
 }
 
 .history-page .title,
@@ -53,9 +54,9 @@
   min-height: 190px;
   flex-direction: column;
   margin: 0;
-  background: #111827;
-  border-top: 4px solid #60a5fa;
-  color: #f9fafb;
+  background: #ffffff;
+  border-top: 4px solid #2563eb;
+  color: #111827;
 }
 
 .history-card .history-game-number,
@@ -64,11 +65,11 @@
 .history-card .history-detail span,
 .history-card .history-detail strong,
 .history-card .history-link {
-  color: #f9fafb;
+  color: #111827;
 }
 
 .history-card .history-date {
-  color: #d1d5db;
+  color: #4b5563;
 }
 
 .history-players {
@@ -78,8 +79,8 @@
   gap: 0.75rem;
   margin-bottom: 1rem;
   padding: 0.85rem;
-  background: #1f2937;
-  border: 1px solid #374151;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
   border-radius: 6px;
 }
 
@@ -88,7 +89,7 @@
   min-width: 0;
   align-items: center;
   gap: 0.5rem;
-  color: #f9fafb;
+  color: #111827;
   font-weight: 600;
 }
 
@@ -139,7 +140,7 @@
 }
 
 .history-versus {
-  color: #93c5fd;
+  color: #1d4ed8;
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -181,26 +182,26 @@
 
 .history-detail {
   padding: 0.75rem 0;
-  border-top: 1px solid #374151;
-  border-bottom: 1px solid #374151;
-  color: #d1d5db;
+  border-top: 1px solid #d1d5db;
+  border-bottom: 1px solid #d1d5db;
+  color: #4b5563;
   font-size: 0.85rem;
 }
 
 .history-detail strong {
-  color: #f9fafb;
+  color: #111827;
   font-weight: 600;
 }
 
 .history-link {
   margin-top: auto;
   padding-top: 1rem;
-  color: #93c5fd;
+  color: #1d4ed8;
   font-weight: 600;
 }
 
 .history-link:hover {
-  color: #bfdbfe;
+  color: #1e3a8a;
 }
 
 .history-empty {
@@ -217,6 +218,91 @@
 .history-empty .icon {
   margin-bottom: 1rem;
   color: #0d2a6e;
+}
+
+@media (prefers-color-scheme: dark) {
+  .history-page {
+    background: #111827;
+    color: #f9fafb;
+    color-scheme: dark;
+  }
+
+  .history-page .title,
+  .history-page .subtitle,
+  .history-page p,
+  .history-page .has-text-centered {
+    color: #f9fafb;
+  }
+
+  .history-page .subtitle {
+    color: #d1d5db;
+  }
+
+  .history-page .button.is-light {
+    background: #374151;
+    color: #f9fafb;
+  }
+
+  .history-page .button.is-light:hover {
+    background: #4b5563;
+    color: #ffffff;
+  }
+
+  .history-eyebrow {
+    color: #93c5fd;
+  }
+
+  .history-card {
+    background: #1f2937;
+    border-top-color: #60a5fa;
+    color: #f9fafb;
+  }
+
+  .history-card .history-game-number,
+  .history-card .history-detail,
+  .history-card .history-detail span,
+  .history-card .history-detail strong,
+  .history-card .history-link,
+  .history-player {
+    color: #f9fafb;
+  }
+
+  .history-card .history-date {
+    color: #d1d5db;
+  }
+
+  .history-players {
+    background: #111827;
+    border-color: #4b5563;
+  }
+
+  .history-versus,
+  .history-link {
+    color: #93c5fd;
+  }
+
+  .history-detail {
+    border-color: #4b5563;
+    color: #d1d5db;
+  }
+
+  .history-link:hover {
+    color: #bfdbfe;
+  }
+
+  .history-empty {
+    background: #1f2937;
+    color: #f9fafb;
+  }
+
+  .history-empty .title,
+  .history-empty p {
+    color: #f9fafb;
+  }
+
+  .history-empty .icon {
+    color: #93c5fd;
+  }
 }
 
 @media (max-width: 800px) {
