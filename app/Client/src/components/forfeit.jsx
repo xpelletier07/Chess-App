@@ -10,7 +10,7 @@ function Forfeit({ onForfeit, disabled = false }) {
 	};
 
 	return (
-		<button type="button" onClick={handleForfeit} disabled={disabled}>
+		<button type="button" className="button is-danger" onClick={handleForfeit} disabled={disabled}>
 			Abandonner la partie
 		</button>
 	);
