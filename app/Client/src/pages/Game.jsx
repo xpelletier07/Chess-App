@@ -26,7 +26,7 @@ export default function Game() {
             try {
                 const since = versionRef.current
                 const response = await fetch(
-                    `${API_BASE_URL}/games/details/${code}${since !== null ? `?since=${since}` : ""}`,
+                    `${API_BASE_URL}/games/details/${code}`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 )
                 const data = await response.json()
