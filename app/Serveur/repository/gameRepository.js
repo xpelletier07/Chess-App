@@ -2,7 +2,10 @@ import { pool } from "./db.js"
 
 // logique pour créer une nouvelle partie
 export async function createGame(code, creatorId) {
-    const { rows } = await pool.query(`insert into game (creator_id, code) values ($1, $2)`, [creatorId, code])
+    const { rows } = await pool.query(`with g as (
+            insert into game (creator_id, code) values ($2, $1) returning id
+        )
+        insert into game_details (game_id) select id from g returning game_id`, [code, creatorId])
     return rows[0]
 }
 
@@ -12,26 +15,46 @@ export async function findGameByCode(code) {
     return rows[0]
 }
 
-export async function getGameStatus(code) {
-    const { rows } = await pool.query(
-        `select game.*, creator.username as creator_username, joiner.username as joiner_username,
-                result.result as last_result,
-                result.ended_by as last_ended_by,
-                result.winner_id as last_winner_id
-         from game
-         join users as creator on creator.id = game.creator_id
-         left join users as joiner on joiner.id = game.joiner_id
-         left join lateral (
-             select h.result, h.ended_by, h.winner_id
-             from history_games h
-             where h.game_id = game.id
-             order by h.id desc
-             limit 1
-         ) as result on true
-         where game.code = $1`,
-        [code]
-    )
+// infos du salon d'attente : game + pseudos des deux joueurs
+export async function getLobbyInfo(code) {
+    const { rows } = await pool.query(`select g.id, g.code, g.creator_id, g.joiner_id, g.state,
+            creator.username as creator_username,
+            joiner.username as joiner_username
+        from game g
+        join users creator on creator.id = g.creator_id
+        left join users joiner on joiner.id = g.joiner_id
+        where g.code = $1`, [code])
     return rows[0]
+}
+
+// retourne la game avec ses détails et le dernier résultat enregistré, à partir du code
+export async function getDetailsGameByCode(code) {
+    const { rows } = await pool.query(`select g.id, g.code, g.creator_id, g.joiner_id, g.state,
+            d.pgn, d.fen, d.move_count, d.result,
+            h.winner_id as last_winner_id, h.ended_by as last_ended_by
+        from game g
+        join game_details d on d.game_id = g.id
+        left join lateral (
+            select winner_id, ended_by
+            from history_games
+            where game_id = g.id
+            order by id desc
+            limit 1
+        ) h on true
+        where g.code = $1`, [code])
+    return rows[0]
+}
+
+// sauvegarde le pgn, le fen et le résultat après un coup, et incrémente move_count
+export async function saveMove(game_id, pgn, fen, result) {
+    await pool.query(`update game_details
+        set pgn = $2, fen = $3, result = $4, move_count = move_count + 1
+        where game_id = $1`, [game_id, pgn, fen, result])
+}
+
+// change l'état de la game ('lobby' | 'en cours' | 'finished')
+export async function setGameState(game_id, state) {
+    await pool.query('update game set state = $2 where id = $1', [game_id, state])
 }
 
 export async function startGame(code, creatorId) {
@@ -96,12 +119,12 @@ export async function forfeitGame(code, playerId) {
     }
 }
 
-export async function createGameResult(result, endedBy, winnerId = null, player1Id = null, player2Id = null) {
+export async function createGameResult(result, endedBy, winnerId = null, player1Id = null, player2Id = null, gameId = null) {
     const { rows } = await pool.query(
-        `insert into history_games (winner_id, result, ended_by, player1_id, player2_id)
-         values ($1, $2, $3, $4, $5)
-         returning id, result, ended_by, player1_id, player2_id, created_at`,
-        [winnerId, result, endedBy, player1Id, player2Id]
+        `insert into history_games (winner_id, result, ended_by, player1_id, player2_id, game_id)
+         values ($1, $2, $3, $4, $5, $6)
+         returning id, game_id, result, ended_by, player1_id, player2_id, created_at`,
+        [winnerId, result, endedBy, player1Id, player2Id, gameId]
     )
     return rows[0]
 }
@@ -113,6 +136,9 @@ export async function findHistoryGames(playerId) {
                 case
                     when history_games.result = 'Abandon' and history_games.winner_id = $1 then 'Victoire'
                     when history_games.result = 'Abandon' and history_games.winner_id is not null then 'Défaite'
+                    when history_games.result = 'Victoire' and history_games.winner_id = $1 then 'Victoire'
+                    when history_games.result = 'Victoire' and history_games.winner_id is not null then 'Défaite'
+                    when history_games.result = 'Nulle' then 'Nulle'
                     else null
                 end as player_outcome,
                 player1.username as player1_name,

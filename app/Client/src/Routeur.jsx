@@ -7,13 +7,7 @@ import App from "./pages/App.jsx";
 import Lobby from "./pages/Lobby.jsx";
 import Game from "./pages/Game.jsx";
 import Classement from "./pages/Classement.jsx";
-import ForfeitTest from "./pages/forfeit_test.jsx";
 import History from "./pages/History.jsx";
-
-// function isTokenExpired(token) {
-// 	const payload = JSON.parse(atob(token.split(".")[1]));
-// 	return payload.exp * 1000 < Date.now(); // exp is in seconds
-// }
 
 function Routeur() {
 	return (
@@ -22,24 +16,12 @@ function Routeur() {
 				<Routes>
 					<Route path="/login" element={<Login />} />
 					<Route path="/signup" element={<Signup />} />
+					{/* Route protégée: seuls les utilisateurs authentifiés accèdent aux pages protégées. */}
 					<Route path="/" element={<ProtectedRoute><App /></ProtectedRoute>} />
 					<Route path="/lobby/:code" element={<ProtectedRoute><Lobby /></ProtectedRoute>} />
 					<Route path="/game/:code" element={<ProtectedRoute><Game /></ProtectedRoute>} />
 					<Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
-					{/*
-						/forfeit est une page de test pour l'abandon de partie. A supprimer plus tard.
-					*/}
-					<Route path="/forfeit" element={<ForfeitTest />} />
-
-					{/* Route protégée: seuls les utilisateurs authentifiés accèdent au classement. */}
-					<Route
-						path="/classement"
-						element={
-							<ProtectedRoute>
-								<Classement />
-							</ProtectedRoute>
-						}
-					/>
+					<Route path="/classement" element={<ProtectedRoute><Classement /></ProtectedRoute>} />
 
 					<Route
 						path="*"
