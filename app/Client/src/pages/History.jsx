@@ -17,9 +17,11 @@ function getResultClass(result) {
 }
 
 function getResultLabel(game) {
-  return game.player_outcome
-    ? `${game.result} · ${game.player_outcome}`
-    : game.result
+  if (game.ended_by === 'forfeit' && game.player_outcome) {
+    return `${game.player_outcome} · Abandon`
+  }
+
+  return game.player_outcome || game.result
 }
 
 function getPlayerName(name, id) {
