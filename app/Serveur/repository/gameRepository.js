@@ -15,14 +15,33 @@ export async function findGameByCode(code) {
     return rows[0]
 }
 
-// retourne les détails d'une partie (pgn, fen, result, move_count, state)
-export async function getDetailsGame(game_id) {
-    const { rows } = await pool.query(
-        `select g.code, g.creator_id, g.joiner_id, g.state,
-                d.pgn, d.fen, d.move_count, d.result
-         from game_details d
-         join game g on g.id = d.game_id
-         where d.game_id = $1`, [game_id])
+// infos du salon d'attente : game + pseudos des deux joueurs
+export async function getLobbyInfo(code) {
+    const { rows } = await pool.query(`select g.id, g.code, g.creator_id, g.joiner_id, g.state,
+            creator.username as creator_username,
+            joiner.username as joiner_username
+        from game g
+        join users creator on creator.id = g.creator_id
+        left join users joiner on joiner.id = g.joiner_id
+        where g.code = $1`, [code])
+    return rows[0]
+}
+
+// retourne la game avec ses détails et le dernier résultat enregistré, à partir du code
+export async function getDetailsGameByCode(code) {
+    const { rows } = await pool.query(`select g.id, g.code, g.creator_id, g.joiner_id, g.state,
+            d.pgn, d.fen, d.move_count, d.result,
+            h.winner_id as last_winner_id, h.ended_by as last_ended_by
+        from game g
+        join game_details d on d.game_id = g.id
+        left join lateral (
+            select winner_id, ended_by
+            from history_games
+            where game_id = g.id
+            order by id desc
+            limit 1
+        ) h on true
+        where g.code = $1`, [code])
     return rows[0]
 }
 
@@ -33,31 +52,9 @@ export async function saveMove(game_id, pgn, fen, result) {
         where game_id = $1`, [game_id, pgn, fen, result])
 }
 
-// change l'état de la game ('lobby' | 'en_cours' | 'finished')
+// change l'état de la game ('lobby' | 'en cours' | 'finished')
 export async function setGameState(game_id, state) {
     await pool.query('update game set state = $2 where id = $1', [game_id, state])
-}
-
-export async function getGameStatus(code) {
-    const { rows } = await pool.query(
-        `select game.*, creator.username as creator_username, joiner.username as joiner_username,
-                result.result as last_result,
-                result.ended_by as last_ended_by,
-                result.winner_id as last_winner_id
-         from game
-         join users as creator on creator.id = game.creator_id
-         left join users as joiner on joiner.id = game.joiner_id
-         left join lateral (
-             select h.result, h.ended_by, h.winner_id
-             from history_games h
-             where h.game_id = game.id
-             order by h.id desc
-             limit 1
-         ) as result on true
-         where game.code = $1`,
-        [code]
-    )
-    return rows[0]
 }
 
 export async function startGame(code, creatorId) {

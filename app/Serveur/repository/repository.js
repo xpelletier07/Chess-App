@@ -7,16 +7,16 @@ export { pool } from "./db.js";
 export {
     createGame,
     findGameByCode, 
-    getDetailsGame,
+    getDetailsGameByCode,
     saveMove,
     setGameState,
-    getGameStatus,
     startGame,
     forfeitGame,
     joinGame, 
     changeGameState,
     findHistoryGames,
-    createGameResult
+    createGameResult,
+    getLobbyInfo
 } from "./gameRepository.js"
 // Le classement et les résultats partagent le dépôt des données associées aux parties.
 export { finishGame, getLeaderboard } from "./rankingRepository.js";
