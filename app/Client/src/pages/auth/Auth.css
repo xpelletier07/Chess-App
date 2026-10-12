@@ -91,6 +91,43 @@
   cursor: not-allowed;
 }
 
+/* Séparateur visuel entre la connexion par mot de passe et le fournisseur OAuth. */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+/* Style du lien qui démarre la redirection OAuth vers GitHub. */
+.auth-oauth-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #111827;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-oauth-button:hover {
+  background: #f9fafb;
+  color: #111827;
+}
+
 .auth-error {
   margin: 0;
   color: #dc2626;

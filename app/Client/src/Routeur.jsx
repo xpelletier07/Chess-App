@@ -3,6 +3,7 @@ import { AuthProvider } from "./auth/AuthContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
+import GithubCallback from "./pages/auth/GithubCallback.jsx";
 import App from "./pages/App.jsx";
 import Lobby from "./pages/Lobby.jsx";
 import Game from "./pages/Game.jsx";
@@ -22,6 +23,8 @@ function Routeur() {
 				<Routes>
 					<Route path="/login" element={<Login />} />
 					<Route path="/signup" element={<Signup />} />
+					{/* Route publique de retour GitHub; elle crée la session avant d'ouvrir une page protégée. */}
+					<Route path="/auth/github/callback" element={<GithubCallback />} />
 					<Route path="/" element={<ProtectedRoute><App /></ProtectedRoute>} />
 					<Route path="/lobby/:code" element={<ProtectedRoute><Lobby /></ProtectedRoute>} />
 					<Route path="/game/:code" element={<ProtectedRoute><Game /></ProtectedRoute>} />

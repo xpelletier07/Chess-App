@@ -21,5 +21,6 @@ export {
     createUser,
     findUserByEmail,
     findUserByEmailOrUsername,
+    findOrCreateGithubUser,
     userEmailExists
 } from "./userRepository.js"
