@@ -29,6 +29,12 @@ services:
       PORT: 3000
       DATABASE_URL: postgresql://postgres:postgres@db:5432/chess_app
       JWT_SECRET: cle-locale-chess-app
+      # Identifiants de l'application OAuth GitHub; la connexion externe échoue explicitement s'ils manquent.
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      # L'URL de callback doit correspondre à celle déclarée dans GitHub.
+      GITHUB_CALLBACK_URL: ${GITHUB_CALLBACK_URL:-http://localhost:3000/auth/github/callback}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}
     depends_on:
       db:
         condition: service_healthy
