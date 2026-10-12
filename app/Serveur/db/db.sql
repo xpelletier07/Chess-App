@@ -1,10 +1,17 @@
 create table if not exists users (
     id serial primary key,
     username varchar(50) not null unique,
-    password varchar(255) not null,
-    email varchar(100) not null unique,
+    password varchar(255),
+    email varchar(100) unique,
+    github_id varchar(64) unique,
     created_at timestamp default current_timestamp
 );
+
+-- Les comptes traditionnels gardent email et mot de passe; OAuth peut créer un compte sans ces données.
+alter table users alter column password drop not null;
+alter table users alter column email drop not null;
+-- Identifiant stable fourni par GitHub, unique pour ne pas l'associer à plusieurs comptes locaux.
+alter table users add column if not exists github_id varchar(64) unique;
 
 -- Cote Elo du joueur (diagramme: Compte.ELO), 1000 au départ; ajoutée aussi aux bases existantes.
 alter table users add column if not exists elo int not null default 1000;

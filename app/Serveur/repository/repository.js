@@ -21,8 +21,9 @@ export {
 // Le classement et les résultats partagent le dépôt des données associées aux parties.
 export { finishGame, getLeaderboard } from "./rankingRepository.js";
 export {
-	createUser,
-	findUserByEmail,
-	findUserByEmailOrUsername,
-	userEmailExists
+    createUser,
+    findUserByEmail,
+    findUserByEmailOrUsername,
+    findOrCreateGithubUser,
+    userEmailExists
 } from "./userRepository.js"
