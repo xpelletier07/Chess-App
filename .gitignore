@@ -1,3 +1,6 @@
+.vscode/
+.openclaude/
+
 # Logs
 logs
 *.log

@@ -1,0 +1,63 @@
+services:
+  db-init:
+    image: curlimages/curl:8.11.1
+    user: "0:0"
+    command:
+      - sh
+      - -ec
+      - |
+        mkdir -p /initdb
+        curl -fsSL https://raw.githubusercontent.com/xpelletier07/Chess-App/dev/app/Serveur/db/db.sql -o /initdb/db.sql
+        curl -fsSL https://raw.githubusercontent.com/xpelletier07/Chess-App/dev/app/Serveur/db/seed.sql -o /initdb/seed.sql
+    volumes:
+      - dbinit:/initdb
+    restart: "no"
+
+  client:
+    image: ghcr.io/xpelletier07/chess-app-client:${IMAGE_TAG:-dev}
+    ports:
+      - "5173:80"
+    depends_on:
+      server:
+        condition: service_started
+
+  server:
+    image: ghcr.io/xpelletier07/chess-app-api:${IMAGE_TAG:-dev}
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/chess_app
+      JWT_SECRET: cle-locale-chess-app
+      # Identifiants de l'application OAuth GitHub; la connexion externe échoue explicitement s'ils manquent.
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      # L'URL de callback doit correspondre à celle déclarée dans GitHub.
+      GITHUB_CALLBACK_URL: ${GITHUB_CALLBACK_URL:-http://localhost:3000/auth/github/callback}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chess_app
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - dbinit:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d chess_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  dbinit:

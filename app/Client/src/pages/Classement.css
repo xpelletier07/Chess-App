@@ -1,0 +1,168 @@
+/* Fond et espacement de la page de classement. */
+.classement-page {
+  min-height: 100vh;
+  padding: 3rem 1.25rem;
+  background: #f4f4f8;
+}
+
+/* Carte centrale et tableau des cotes. */
+.classement-card {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 36px rgba(20, 31, 55, 0.08);
+}
+
+.classement-header {
+  /* Dispose les commandes de part et d'autre du titre centré. */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.classement-header > :last-child {
+  /* Aligne le bouton d'actualisation avec le bord droit de l'en-tête. */
+  justify-self: end;
+}
+
+.classement-header .button.classement-home-button {
+  /* Empêche l'étirement dans la colonne de la grille et réduit la largeur sans changer la hauteur. */
+  justify-self: start;
+  width: fit-content;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+/* Le titre reste contrasté avec le fond clair de la carte. */
+.classement-header .title {
+  margin-bottom: 0.5rem;
+  color: #172554;
+}
+
+.classement-header .subtitle {
+  color: #64748b;
+}
+
+.classement-eyebrow {
+  /* Petite étiquette de marque au-dessus du titre principal. */
+  margin-bottom: 0.35rem;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.classement-table th {
+  /* Présente les intitulés comme des repères plutôt que comme des données. */
+  color: #172554;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.classement-table td,
+.classement-table th {
+  /* Centre verticalement les rangs, noms et valeurs de chaque ligne. */
+  vertical-align: middle;
+  padding: 1rem 0.75rem;
+}
+
+.classement-rank {
+  /* Affiche le rang sans pastille; les médailles colorent seulement les trois premiers chiffres. */
+  color: #172554;
+  font-weight: 700;
+}
+
+.classement-rank.is-first {
+  color: #d4a017;
+}
+
+.classement-rank.is-second {
+  color: #8a8f98;
+}
+
+.classement-rank.is-third {
+  color: #a65e2e;
+}
+
+.classement-table tbody tr td {
+  /* Donne aux lignes de données le gris clair du bouton Accueil, sans toucher à l'en-tête. */
+  background-color: #f5f5f5 !important;
+  color: #172554 !important;
+}
+
+.classement-elo {
+  /* La cote est mise en évidence car elle détermine l'ordre du classement. */
+  color: #172554;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.classement-current-player {
+  /* Surligne la ligne personnelle en plus du badge « Vous ». */
+  background: #eff6ff !important;
+}
+
+.classement-you {
+  /* Petit badge adjacent au nom du joueur connecté. */
+  margin-left: 0.65rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.classement-state {
+  /* Centre les messages d'attente et d'absence de résultats dans la carte. */
+  display: flex;
+  min-height: 220px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.classement-footer {
+  /* Sépare les paramètres Elo du tableau sans détourner l'attention. */
+  margin-top: 1rem;
+  color: #64748b;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+/* Réorganise la carte et son en-tête sur les petits écrans. */
+@media (max-width: 600px) {
+  .classement-page {
+    padding: 1rem 0.5rem;
+  }
+
+  .classement-card {
+    padding: 1rem;
+  }
+
+  .classement-header {
+    grid-template-columns: auto 1fr auto;
+    gap: 0.5rem;
+  }
+
+  .classement-header .title {
+    font-size: 1.5rem;
+  }
+
+  .classement-header .subtitle {
+    font-size: 0.8rem;
+  }
+
+  .classement-header > button {
+    padding: 0.5rem;
+  }
+}
