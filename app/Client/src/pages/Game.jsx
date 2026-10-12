@@ -156,17 +156,22 @@ export default function Game() {
                             {message}
                         </div>
 
-                        <div className="mb-4" style={{ maxWidth: "800px", margin: "0 auto" }}>
-                            <Chessboard options={chessboardOptions} />
-                        </div>
+						<div className="columns is-centered">
+							<div className="column is-one-fifth has-text-right"></div>
+							<div className="column is-three-fifths has-text-centered">
+								<Chessboard options={chessboardOptions} />
+							</div>
 
-                        <ol style={{ marginTop: "10px" }}>
-                            {Array.from({ length: Math.ceil(state.history.length / 2) }, (_, i) => (
-                                <li key={i}>
-                                    {state.history[2 * i]} {state.history[2 * i + 1] ?? ""}
-                                </li>
-                            ))}
-                        </ol>
+							<div className="column is-one-fifth has-text-left">
+								<ol className="ml-5">
+									{Array.from({ length: Math.ceil(state.history.length / 2) }, (_, i) => (
+										<li key={i}>
+											{state.history[2 * i]} {state.history[2 * i + 1] ?? ""}
+										</li>
+									))}
+								</ol>
+							</div>
+						</div>
 
                         {error && <div className="notification is-danger is-light">{error}</div>}
                         <Forfeit onForfeit={forfeit} disabled={savingResult || Boolean(gameResult)} />
