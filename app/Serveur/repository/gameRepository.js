@@ -1,4 +1,20 @@
 import { pool } from "./db.js"
+import { calculateGameRatings } from "./elo.js"
+
+// Met à jour users.elo des deux joueurs à la fin d'une partie; winnerId null = nulle.
+// db peut être le pool ou un client de transaction.
+async function updateEloForGame(db, player1Id, player2Id, winnerId) {
+    const { rows } = await db.query(
+        "select id, elo from users where id = any($1) order by id for update",
+        [[player1Id, player2Id]]
+    )
+    const player1 = rows.find((u) => Number(u.id) === Number(player1Id))
+    const player2 = rows.find((u) => Number(u.id) === Number(player2Id))
+    if (!player1 || !player2) return
+    const { elo1, elo2 } = calculateGameRatings(player1, player2, winnerId)
+    await db.query("update users set elo = $1 where id = $2", [elo1, player1.id])
+    await db.query("update users set elo = $1 where id = $2", [elo2, player2.id])
+}
 
 // logique pour créer une nouvelle partie
 export async function createGame(code, creatorId) {
@@ -105,6 +121,7 @@ export async function forfeitGame(code, playerId) {
             [game.id, game.creator_id, game.joiner_id, winnerId]
         )
         await client.query("update game set state = 'finished' where id = $1", [game.id])
+        await updateEloForGame(client, game.creator_id, game.joiner_id, winnerId)
         await client.query("commit")
 
         return {
@@ -126,6 +143,9 @@ export async function createGameResult(result, endedBy, winnerId = null, player1
          returning id, game_id, result, ended_by, player1_id, player2_id, created_at`,
         [winnerId, result, endedBy, player1Id, player2Id, gameId]
     )
+    if (player1Id != null && player2Id != null) {
+        await updateEloForGame(pool, player1Id, player2Id, winnerId)
+    }
     return rows[0]
 }
 
