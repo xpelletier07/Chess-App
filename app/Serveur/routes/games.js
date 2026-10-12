@@ -154,6 +154,7 @@ router.get('/details/:code', checkAuth, async (req, res) => {
 })
 
 // POST /games/:code/move : valide le coup avec chess.js puis le stocke
+// Fait aussi le endgame 
 router.post('/:code/move', checkAuth, async (req, res) => {
     const { code } = req.params
     const { from, to, promotion } = req.body
@@ -184,7 +185,26 @@ router.post('/:code/move', checkAuth, async (req, res) => {
         }
 
         await repository.saveMove(game.id, chess.pgn(), chess.fen(), result)
-        if (result) await repository.setGameState(game.id, 'finished')
+
+        // si la partie est finie, on l'enregistre dans history_games
+        let winnerId = null
+        let endedBy = null
+        if (result) {
+            await repository.setGameState(game.id, 'finished')
+
+            const isDraw = result === 'draw'
+            winnerId = isDraw ? null : userId
+            endedBy = isDraw ? (chess.isStalemate() ? 'stalemate' : 'draw') : 'checkmate'
+
+            await repository.createGameResult(
+                isDraw ? 'Nulle' : 'Victoire',
+                endedBy,
+                winnerId,
+                game.creator_id,
+                game.joiner_id,
+                game.id
+            )
+        }
 
         const updated = {
             ...game,
@@ -193,6 +213,8 @@ router.post('/:code/move', checkAuth, async (req, res) => {
             result,
             move_count: game.move_count + 1,
             state: result ? 'finished' : game.state,
+            last_winner_id: winnerId,
+            last_ended_by: endedBy,
         }
         res.json({ changed: true, ...toState(updated, userId) })
     } catch (err) {

@@ -119,12 +119,12 @@ export async function forfeitGame(code, playerId) {
     }
 }
 
-export async function createGameResult(result, endedBy, winnerId = null, player1Id = null, player2Id = null) {
+export async function createGameResult(result, endedBy, winnerId = null, player1Id = null, player2Id = null, gameId = null) {
     const { rows } = await pool.query(
-        `insert into history_games (winner_id, result, ended_by, player1_id, player2_id)
-         values ($1, $2, $3, $4, $5)
-         returning id, result, ended_by, player1_id, player2_id, created_at`,
-        [winnerId, result, endedBy, player1Id, player2Id]
+        `insert into history_games (winner_id, result, ended_by, player1_id, player2_id, game_id)
+         values ($1, $2, $3, $4, $5, $6)
+         returning id, game_id, result, ended_by, player1_id, player2_id, created_at`,
+        [winnerId, result, endedBy, player1Id, player2Id, gameId]
     )
     return rows[0]
 }
@@ -136,6 +136,9 @@ export async function findHistoryGames(playerId) {
                 case
                     when history_games.result = 'Abandon' and history_games.winner_id = $1 then 'Victoire'
                     when history_games.result = 'Abandon' and history_games.winner_id is not null then 'Défaite'
+                    when history_games.result = 'Victoire' and history_games.winner_id = $1 then 'Victoire'
+                    when history_games.result = 'Victoire' and history_games.winner_id is not null then 'Défaite'
+                    when history_games.result = 'Nulle' then 'Nulle'
                     else null
                 end as player_outcome,
                 player1.username as player1_name,

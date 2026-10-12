@@ -48,17 +48,23 @@ export default function Game() {
         }
     }, [code, token, state?.state])
 
-    // modal de fin de partie
-    useEffect(() => {
-        if (state?.state !== "finished" || gameResult) return
-        const isWinner = Number(state.winnerId) === Number(user?.id)
-        setGameResult({
-            message: isWinner
-                ? "Victoire ! Votre adversaire a abandonné la partie."
-                : "La partie a été enregistrée comme un abandon.",
-            isWinner
-        })
-    }, [state, gameResult, user])
+	// modal de fin de partie
+useEffect(() => {
+    if (state?.state !== "finished" || gameResult) return
+
+    const isWinner = Number(state.winnerId) === Number(user?.id)
+    let message
+    if (state.endedBy === "forfeit") {
+        message = isWinner
+            ? "Victoire ! Votre adversaire a abandonné la partie."
+            : "La partie a été enregistrée comme un abandon."
+    } else if (state.endedBy === "checkmate") {
+        message = isWinner ? "Victoire par échec et mat !" : "Défaite : échec et mat."
+    } else {
+        message = "Partie nulle."
+    }
+    setGameResult({ message, isWinner, endedBy: state.endedBy })
+}, [state, gameResult, user])
 
     async function forfeit() {
         if (savingResult || gameResult) return
@@ -72,7 +78,7 @@ export default function Game() {
             })
             const data = await response.json()
             if (!response.ok) throw new Error(data.error || "Impossible d'enregistrer l'abandon.")
-            setGameResult(data)
+            setGameResult({ ...data, endedBy: "forfeit" })
         } catch (e) {
             setError(e.message)
         } finally {
@@ -188,8 +194,10 @@ export default function Game() {
                             <p className="modal-card-title" id="game-result-title">Partie terminée</p>
                         </header>
                         <section className="modal-card-body">
-                            <p>{gameResult.message}</p>
-                            <p className="is-size-7 mt-3">L'abandon a été enregistré dans l'historique.</p>
+						<p>{gameResult.message}</p>
+						{gameResult.endedBy === "forfeit" && (
+							<p className="is-size-7 mt-3">L'abandon a été enregistré dans l'historique.</p>
+						)}
                         </section>
                         <footer className="modal-card-foot">
                             <Link className="button" to="/">Retour à l'accueil</Link>
