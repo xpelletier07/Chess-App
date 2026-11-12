@@ -5,6 +5,7 @@ import { Chessboard } from "react-chessboard"
 import Forfeit from "../components/forfeit.jsx"
 import { API_BASE_URL } from "../config"
 import { useAuth } from "../auth/AuthContext"
+import { io } from 'socket.io-client'
 
 export default function Game() {
     const { code } = useParams()
