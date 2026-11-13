@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { Link, useParams } from "react-router-dom"
 import { Chess } from "chess.js"
 import { Chessboard } from "react-chessboard"
@@ -17,55 +17,148 @@ export default function Game() {
     const versionRef = useRef(null)  // dernière version reçue du serveur
     const pendingRef = useRef(false) // true pendant qu'un coup est envoyé
 
-    // un seul poll : plateau, statut de la partie et gagnant
-    useEffect(() => {
-        if (state?.state === "finished") return
-        let active = true
+    // récupère le game state du serveur et update le game state de l'utilisateur
+    const applyServerState = useCallback((nextState) => {
+        // si pas de changements
+        if (!nextState || nextState.changed === false) return
 
-        async function poll() {
-            if (pendingRef.current) return
+        const nextVersion = Number(nextState.version)
+        const currentVersion = versionRef.current
+        // si l'utilisateur a une version plus récente (aka vient de faire un move), exit la fonction
+        if (currentVersion !== null && nextVersion < Number(currentVersion)) {
+            return
+        }
+
+        versionRef.current = nextVersion
+        setState((currentState) => {
+            if (!currentState) return nextState
+            return { ...currentState, ...nextState }
+        })
+    }, [])
+
+    // nouveau polling avec socket.io
+    useEffect(() => {
+        let active = true
+        // début de partie        
+        async function loadInitialState() {
             try {
-                const since = versionRef.current
-                const response = await fetch(
-                    `${API_BASE_URL}/games/details/${code}`,
+                const response = await fetch(`${API_BASE_URL}/games/details/${code}`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 )
                 const data = await response.json()
-                if (!response.ok) throw new Error(data.error || "Impossible de récupérer la partie")
-                // on ignore la réponse si démonté ou si un coup est parti entre temps
-                if (!active || pendingRef.current || data.changed === false) return
-                versionRef.current = data.version
-                setState(data)
-            } catch (e) {
-                if (active) setError(e.message)
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Impossible de récupérer la partie")
+                }
+                // si socket.io tjrs actif, update le game state
+                if (active) {
+                    applyServerState(data)
+                }
+            } catch (error) {
+                if (active) {
+                    setError(error.message)
+                }
             }
         }
+        loadInitialState()
 
-        poll()
-        const timer = setInterval(poll, 2000)
+        // crée la connection websocket
+        const socket = io(API_BASE_URL, {
+            auth: { token },
+            autoConnect: false
+        })
+
+        // événement websocket
+        socket.on("connect", () => {
+            // lors du join
+            socket.emit("game:join", { code }, (response) => {
+                if (!active) return
+
+                if (!response?.ok) {
+                    setError(response?.error || "Impossible de rejoindre la partie")
+                    return
+                }
+
+                setError("")
+                applyServerState(response.state)
+            })
+        })
+
+        // recevoir le game state
+        socket.on("game:state", (nextState) => {
+            if (!active) return
+            setError("")
+            applyServerState(nextState)
+        })
+
+        // si erreurs
+        socket.on("connect_error", (error) => {
+            if (active) {
+                setError(error.message || "Connexion temps réel impossible")
+            }
+        })
+
+        socket.connect()
+
         return () => {
             active = false
-            clearInterval(timer)
+            socket.disconnect()
         }
-    }, [code, token, state?.state])
+    }, [code, token, applyServerState])
 
-	// modal de fin de partie
-useEffect(() => {
-    if (state?.state !== "finished" || gameResult) return
 
-    const isWinner = Number(state.winnerId) === Number(user?.id)
-    let message
-    if (state.endedBy === "forfeit") {
-        message = isWinner
-            ? "Victoire ! Votre adversaire a abandonné la partie."
-            : "La partie a été enregistrée comme un abandon."
-    } else if (state.endedBy === "checkmate") {
-        message = isWinner ? "Victoire par échec et mat !" : "Défaite : échec et mat."
-    } else {
-        message = "Partie nulle."
-    }
-    setGameResult({ message, isWinner, endedBy: state.endedBy })
-}, [state, gameResult, user])
+    /* 
+    ancien polling, je le garde juste pour etre sur que si qqch plante on a le code encore     
+    // un seul poll : plateau, statut de la partie et gagnant
+        useEffect(() => {
+            if (state?.state === "finished") return
+            let active = true
+    
+            async function poll() {
+                if (pendingRef.current) return
+                try {
+                    const since = versionRef.current
+                    const response = await fetch(
+                        `${API_BASE_URL}/games/details/${code}`,
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    )
+                    const data = await response.json()
+                    if (!response.ok) throw new Error(data.error || "Impossible de récupérer la partie")
+                    // on ignore la réponse si démonté ou si un coup est parti entre temps
+                    if (!active || pendingRef.current || data.changed === false) return
+                    versionRef.current = data.version
+                    setState(data)
+                } catch (e) {
+                    if (active) setError(e.message)
+                }
+            }
+    
+            poll()
+            const timer = setInterval(poll, 2000)
+            return () => {
+                active = false
+                clearInterval(timer)
+            }
+        }, [code, token, state?.state]) 
+    */
+
+    // modal de fin de partie
+    useEffect(() => {
+        if (state?.state !== "finished" || gameResult) return
+
+        const isWinner = Number(state.winnerId) === Number(user?.id)
+        let message
+        if (state.endedBy === "forfeit") {
+            message = isWinner
+                ? "Victoire ! Votre adversaire a abandonné la partie."
+                : "La partie a été enregistrée comme un abandon."
+        } else if (state.endedBy === "checkmate") {
+            message = isWinner ? "Victoire par échec et mat !" : "Défaite : échec et mat."
+        } else {
+            message = "Partie nulle."
+        }
+        setGameResult({ message, isWinner, endedBy: state.endedBy })
+    }, [state, gameResult, user])
 
     async function forfeit() {
         if (savingResult || gameResult) return
@@ -121,8 +214,7 @@ useEffect(() => {
             })
             const data = await response.json()
             if (!response.ok) throw new Error(data.error || "Coup refusé")
-            versionRef.current = data.version
-            setState(data)
+            applyServerState(data)
         } catch (e) {
             setError(e.message)
             setState(previous)        // on annule le coup affiché
@@ -163,22 +255,22 @@ useEffect(() => {
                             {message}
                         </div>
 
-						<div className="columns is-centered">
-							<div className="column is-one-fifth has-text-right"></div>
-							<div className="column is-three-fifths has-text-centered">
-								<Chessboard options={chessboardOptions} />
-							</div>
+                        <div className="columns is-centered">
+                            <div className="column is-one-fifth has-text-right"></div>
+                            <div className="column is-three-fifths has-text-centered">
+                                <Chessboard options={chessboardOptions} />
+                            </div>
 
-							<div className="column is-one-fifth has-text-left">
-								<ol className="ml-5">
-									{Array.from({ length: Math.ceil(state.history.length / 2) }, (_, i) => (
-										<li key={i}>
-											{state.history[2 * i]} {state.history[2 * i + 1] ?? ""}
-										</li>
-									))}
-								</ol>
-							</div>
-						</div>
+                            <div className="column is-one-fifth has-text-left">
+                                <ol className="ml-5">
+                                    {Array.from({ length: Math.ceil(state.history.length / 2) }, (_, i) => (
+                                        <li key={i}>
+                                            {state.history[2 * i]} {state.history[2 * i + 1] ?? ""}
+                                        </li>
+                                    ))}
+                                </ol>
+                            </div>
+                        </div>
 
                         {error && <div className="notification is-danger is-light">{error}</div>}
                         <Forfeit onForfeit={forfeit} disabled={savingResult || Boolean(gameResult)} />
@@ -195,10 +287,10 @@ useEffect(() => {
                             <p className="modal-card-title" id="game-result-title">Partie terminée</p>
                         </header>
                         <section className="modal-card-body">
-						<p>{gameResult.message}</p>
-						{gameResult.endedBy === "forfeit" && (
-							<p className="is-size-7 mt-3">L'abandon a été enregistré dans l'historique.</p>
-						)}
+                            <p>{gameResult.message}</p>
+                            {gameResult.endedBy === "forfeit" && (
+                                <p className="is-size-7 mt-3">L'abandon a été enregistré dans l'historique.</p>
+                            )}
                         </section>
                         <footer className="modal-card-foot">
                             <Link className="button" to="/">Retour à l'accueil</Link>
