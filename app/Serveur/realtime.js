@@ -16,7 +16,7 @@ export function attachRealtime(server) {
     io.use((socket, next) => {
         const token = socket.handshake.auth?.token;
         if (token !== undefined) {
-            const payload = jwt.verify(token, porvess.env.JWT_SECRET)
+            const payload = jwt.verify(token, process.env.JWT_SECRET)
             if (!payload) return next(new Error('Jeton invalide.'))
             socket.data.user = payload
         }
