@@ -13,6 +13,7 @@ export default function Game() {
     const [gameResult, setGameResult] = useState(null)
     const [savingResult, setSavingResult] = useState(false)
     const [error, setError] = useState("")
+    const [opponent, setOpponent] = useState(null) // { name, online, secondsLeft }
     const versionRef = useRef(null)  // dernière version reçue du serveur
     const pendingRef = useRef(false) // true pendant qu'un coup est envoyé
 
@@ -32,6 +33,7 @@ export default function Game() {
                 const data = await response.json()
                 if (!response.ok) throw new Error(data.error || "Impossible de récupérer la partie")
                 // on ignore la réponse si démonté ou si un coup est parti entre temps
+                if (active) setOpponent(data.opponent ?? null)
                 if (!active || pendingRef.current || data.changed === false) return
                 versionRef.current = data.version
                 setState(data)
@@ -47,6 +49,18 @@ export default function Game() {
             clearInterval(timer)
         }
     }, [code, token, state?.state])
+
+    // compte à rebours affiché chaque seconde; le poll le resynchronise avec le serveur
+    const opponentOffline = opponent && !opponent.online
+    useEffect(() => {
+        if (!opponentOffline) return
+        const timer = setInterval(() => {
+            setOpponent((o) => o && !o.online
+                ? { ...o, secondsLeft: Math.max(0, o.secondsLeft - 1) }
+                : o)
+        }, 1000)
+        return () => clearInterval(timer)
+    }, [opponentOffline])
 
 	// modal de fin de partie
 useEffect(() => {
@@ -155,6 +169,20 @@ useEffect(() => {
                     <section className="box">
                         <h1 className="title is-2">Partie en cours</h1>
                         <p className="subtitle is-5">La partie {code} est prête.</p>
+                        {opponent && (
+                            <p
+                                className={`is-size-5 mb-3 ${opponent.online ? "" : "has-text-grey-light"}`}
+                                data-testid="opponent-status"
+                            >
+                                <span className={`tag is-rounded mr-2 ${opponent.online ? "is-success" : "is-light"}`}>&nbsp;</span>
+                                <strong className={opponent.online ? "" : "has-text-grey-light"}>
+                                    {opponent.name ?? "Adversaire"}
+                                </strong>
+                                {opponent.online
+                                    ? " · en ligne"
+                                    : ` · hors ligne, fin de la partie dans ${opponent.secondsLeft} s`}
+                            </p>
+                        )}
                         <div className="notification is-info is-light">
                             {state.color
                                 ? `Tu joues les ${state.color === "w" ? "blancs" : "noirs"}. `

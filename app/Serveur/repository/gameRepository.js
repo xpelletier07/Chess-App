@@ -47,9 +47,14 @@ export async function getLobbyInfo(code) {
 export async function getDetailsGameByCode(code) {
     const { rows } = await pool.query(`select g.id, g.code, g.creator_id, g.joiner_id, g.state,
             d.pgn, d.fen, d.move_count, d.result,
+            cu.username as creator_username, ju.username as joiner_username,
+            extract(epoch from now() - g.creator_last_seen) as creator_idle,
+            extract(epoch from now() - g.joiner_last_seen) as joiner_idle,
             h.winner_id as last_winner_id, h.ended_by as last_ended_by
         from game g
         join game_details d on d.game_id = g.id
+        join users cu on cu.id = g.creator_id
+        left join users ju on ju.id = g.joiner_id
         left join lateral (
             select winner_id, ended_by
             from history_games
