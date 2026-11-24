@@ -16,7 +16,9 @@ export {
     changeGameState,
     findHistoryGames,
     createGameResult,
-    getLobbyInfo
+    getLobbyInfo,
+    touchPlayer,
+    findActiveGame
 } from "./gameRepository.js"
 // Le classement et les résultats partagent le dépôt des données associées aux parties.
 export { finishGame, getLeaderboard } from "./rankingRepository.js";

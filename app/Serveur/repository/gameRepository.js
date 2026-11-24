@@ -84,6 +84,45 @@ export async function startGame(code, creatorId) {
          returning id, creator_id, joiner_id, code, state`,
         [code, creatorId]
     )
+    // les deux joueurs sont considérés présents au démarrage
+    if (rows[0]) {
+        await pool.query(
+            "update game set creator_last_seen = now(), joiner_last_seen = now() where id = $1",
+            [rows[0].id]
+        )
+    }
+    return rows[0]
+}
+
+// Durée (secondes) pendant laquelle un joueur peut revenir dans sa partie
+export const RECONNECT_WINDOW_SECONDS = 60
+
+// Marque le joueur comme présent (appelé à chaque poll d'une partie en cours)
+export async function touchPlayer(gameId, playerId) {
+    await pool.query(
+        `update game
+         set creator_last_seen = case when creator_id = $2 then now() else creator_last_seen end,
+             joiner_last_seen  = case when joiner_id  = $2 then now() else joiner_last_seen end
+         where id = $1 and state = 'en cours' and (creator_id = $2 or joiner_id = $2)`,
+        [gameId, playerId]
+    )
+}
+
+// Partie en cours que le joueur peut rejoindre: sa dernière activité date de moins de 60 secondes
+export async function findActiveGame(playerId) {
+    const { rows } = await pool.query(
+        `select id, code, creator_id, joiner_id, state
+         from game
+         where state = 'en cours'
+           and (
+             (creator_id = $1 and coalesce(creator_last_seen, now()) > now() - make_interval(secs => $2))
+             or
+             (joiner_id = $1 and coalesce(joiner_last_seen, now()) > now() - make_interval(secs => $2))
+           )
+         order by id desc
+         limit 1`,
+        [playerId, RECONNECT_WINDOW_SECONDS]
+    )
     return rows[0]
 }
 

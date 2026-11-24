@@ -71,6 +71,17 @@ router.post('/:code/forfeit', checkAuth, async (req, res) => {
   }
 });
 
+// Reconnexion: partie en cours que le joueur peut reprendre (retour dans les 60 secondes)
+router.get('/active', checkAuth, async (req, res) => {
+  try {
+    const game = await repository.findActiveGame(req.user.id);
+    return res.json({ game: game ?? null });
+  } catch (error) {
+    console.error('Erreur dans GET /games/active', error);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 router.get('/history', checkAuth, async (req, res) => {
   try {
     const games = await repository.findHistoryGames(req.user.id);
@@ -141,6 +152,9 @@ router.get('/details/:code', checkAuth, async (req, res) => {
     try {
         const game = await repository.getDetailsGameByCode(code)
         if (!game) return res.status(404).json({ error: 'Partie introuvable' })
+
+        // chaque poll d'un joueur sert de signal de présence
+        if (game.state === 'en cours') await repository.touchPlayer(game.id, req.user.id)
 
         const state = toState(game, req.user.id)
         if (since !== undefined && Number(since) === state.version) {
