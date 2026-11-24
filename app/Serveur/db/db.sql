@@ -28,6 +28,10 @@ CREATE TABLE IF NOT EXISTS game (
   state TEXT NOT NULL DEFAULT 'lobby'
 );
 
+-- Dernière activité (poll) de chaque joueur; sert à la reconnexion (fenêtre de 60 secondes).
+ALTER TABLE game ADD COLUMN IF NOT EXISTS creator_last_seen TIMESTAMPTZ;
+ALTER TABLE game ADD COLUMN IF NOT EXISTS joiner_last_seen TIMESTAMPTZ;
+
 CREATE TABLE IF NOT EXISTS game_details (
   id          SERIAL PRIMARY KEY,
   game_id     INTEGER NOT NULL UNIQUE REFERENCES game(id) ON DELETE CASCADE,

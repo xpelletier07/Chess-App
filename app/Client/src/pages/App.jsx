@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { API_BASE_URL } from '../config'
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function App() {
   const { user, logout } = useAuth()
@@ -10,6 +10,25 @@ function App() {
   const navigate = useNavigate()
   // récupérer le token du local storage
   const token = localStorage.getItem("token")
+
+  // Reconnexion: si une partie en cours attend le joueur (retour < 60 s), on l'y renvoie
+  useEffect(() => {
+    let active = true
+    async function resumeGame() {
+      try {
+        const reponse = await fetch(`${API_BASE_URL}/games/active`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (!reponse.ok) return
+        const data = await reponse.json()
+        if (active && data.game) navigate(`/game/${data.game.code}`, { replace: true })
+      } catch {
+        // pas de reconnexion possible: on reste sur l'accueil
+      }
+    }
+    resumeGame()
+    return () => { active = false }
+  }, [token, navigate])
 
   function handleLogout() {
     logout();
