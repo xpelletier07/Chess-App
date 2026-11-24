@@ -1,7 +1,7 @@
 import express from 'express';
 import * as repository from '../repository/repository.js';
 import { checkAuth } from '../middlewares/checkAuth.js';
-import { toState, getColor } from '../utils/gameState.js';
+import { toState, getColor, getOpponentStatus } from '../utils/gameState.js';
 import { Chess } from 'chess.js'
 
 const router = express.Router();
@@ -157,10 +157,12 @@ router.get('/details/:code', checkAuth, async (req, res) => {
         if (game.state === 'en cours') await repository.touchPlayer(game.id, req.user.id)
 
         const state = toState(game, req.user.id)
+        const opponent = game.state === 'en cours' ? getOpponentStatus(game, req.user.id) : null
+        // le statut de l'adversaire est renvoyé même si le plateau n'a pas changé
         if (since !== undefined && Number(since) === state.version) {
-            return res.json({ changed: false })
+            return res.json({ changed: false, opponent })
         }
-        res.json({ changed: true, ...state })
+        res.json({ changed: true, ...state, opponent })
     } catch (err) {
         console.error(err)
         res.status(500).json({ error: 'Erreur serveur' })
