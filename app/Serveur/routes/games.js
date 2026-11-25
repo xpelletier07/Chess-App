@@ -1,7 +1,7 @@
 import express from 'express';
 import * as repository from '../repository/repository.js';
 import { checkAuth } from '../middlewares/checkAuth.js';
-import { toState, getColor } from '../utils/gameState.js';
+import { toState, getColor, getOpponentStatus } from '../utils/gameState.js';
 import { Chess } from 'chess.js'
 
 const router = express.Router();
@@ -67,6 +67,17 @@ router.post('/:code/forfeit', checkAuth, async (req, res) => {
     return res.json(result);
   } catch (error) {
     console.error('Erreur dans POST /games/:code/forfeit', error);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Reconnexion: partie en cours que le joueur peut reprendre (retour dans les 60 secondes)
+router.get('/active', checkAuth, async (req, res) => {
+  try {
+    const game = await repository.findActiveGame(req.user.id);
+    return res.json({ game: game ?? null });
+  } catch (error) {
+    console.error('Erreur dans GET /games/active', error);
     return res.status(500).json({ error: 'Erreur serveur' });
   }
 });
@@ -142,11 +153,16 @@ router.get('/details/:code', checkAuth, async (req, res) => {
         const game = await repository.getDetailsGameByCode(code)
         if (!game) return res.status(404).json({ error: 'Partie introuvable' })
 
+        // chaque poll d'un joueur sert de signal de présence
+        if (game.state === 'en cours') await repository.touchPlayer(game.id, req.user.id)
+
         const state = toState(game, req.user.id)
+        const opponent = game.state === 'en cours' ? getOpponentStatus(game, req.user.id) : null
+        // le statut de l'adversaire est renvoyé même si le plateau n'a pas changé
         if (since !== undefined && Number(since) === state.version) {
-            return res.json({ changed: false })
+            return res.json({ changed: false, opponent })
         }
-        res.json({ changed: true, ...state })
+        res.json({ changed: true, ...state, opponent })
     } catch (err) {
         console.error(err)
         res.status(500).json({ error: 'Erreur serveur' })
