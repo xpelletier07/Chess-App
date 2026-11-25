@@ -180,6 +180,28 @@ export async function forfeitGame(code, playerId) {
     }
 }
 
+// Termine par abandon les parties en cours dont un joueur est absent depuis plus de 60 secondes.
+// Si les deux sont absents, celui parti en premier perd. Retourne les codes des parties terminées.
+export async function forfeitAbandonedGames() {
+    const { rows } = await pool.query(
+        `select code,
+                case when coalesce(creator_last_seen, now()) <= coalesce(joiner_last_seen, now())
+                     then creator_id else joiner_id end as loser_id
+         from game
+         where state = 'en cours'
+           and (creator_last_seen < now() - make_interval(secs => $1)
+                or joiner_last_seen < now() - make_interval(secs => $1))`,
+        [RECONNECT_WINDOW_SECONDS]
+    )
+    const ended = []
+    for (const { code, loser_id } of rows) {
+        // forfeitGame reverrouille la partie: sans effet si elle vient de se terminer
+        const result = await forfeitGame(code, loser_id)
+        if (!result.error) ended.push(code)
+    }
+    return ended
+}
+
 export async function createGameResult(result, endedBy, winnerId = null, player1Id = null, player2Id = null, gameId = null) {
     const { rows } = await pool.query(
         `insert into history_games (winner_id, result, ended_by, player1_id, player2_id, game_id)
