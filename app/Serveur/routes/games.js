@@ -3,44 +3,45 @@ import * as repository from '../repository/repository.js';
 import { checkAuth } from '../middlewares/checkAuth.js';
 import { toState, getColor } from '../utils/gameState.js';
 import { Chess } from 'chess.js'
+import { getIO } from '../realtime.js';
 
 const router = express.Router();
 
 // POST pour créer une nouvelle partie
 router.post("/newGame", checkAuth, async (req, res) => {
-    try {
-        const creatorId = req.user.id;
-        const code = String(Math.floor(100000 + Math.random() * 900000));
-        await repository.createGame(code, creatorId);
-        const game = await repository.findGameByCode(code);
+  try {
+    const creatorId = req.user.id;
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    await repository.createGame(code, creatorId);
+    const game = await repository.findGameByCode(code);
 
-        return res.status(201).json({ game });
-    }
-    catch (error) {
-        console.error("Erreur dans POST /games/newGame", error);
-        return res.status(500).json({ error: "Erreur serveur" });
-    }
+    return res.status(201).json({ game });
+  }
+  catch (error) {
+    console.error("Erreur dans POST /games/newGame", error);
+    return res.status(500).json({ error: "Erreur serveur" });
+  }
 })
 
 // POST pour join une partie
 router.post("/join/:code", checkAuth, async (req, res) => {
-    try {
-        // bcp d'erreurs 409 CONFLICT => pas necessairement une mauvaise requête
-        // mais entre en conflit avec les règles mértier
+  try {
+    // bcp d'erreurs 409 CONFLICT => pas necessairement une mauvaise requête
+    // mais entre en conflit avec les règles mértier
 
-        const code = req.params.code
-        const playerId = req.user.id;
-        const result = await repository.joinGame(code, playerId);
-        if (result.error) {
-          return res.status(result.status).json({ error: result.error });
-        }
+    const code = req.params.code
+    const playerId = req.user.id;
+    const result = await repository.joinGame(code, playerId);
+    if (result.error) {
+      return res.status(result.status).json({ error: result.error });
+    }
 
-        return res.status(200).json(result);
-    }
-      catch (error) {
-        console.error("Erreur dans POST /games/join", error);
-        return res.status(500).json({ error: "Erreur serveur" });
-    }
+    return res.status(200).json(result);
+  }
+  catch (error) {
+    console.error("Erreur dans POST /games/join", error);
+    return res.status(500).json({ error: "Erreur serveur" });
+  }
 })
 
 router.post('/:code/start', checkAuth, async (req, res) => {
@@ -136,91 +137,99 @@ router.post('/result', checkAuth, async (req, res) => {
 });
 
 router.get('/details/:code', checkAuth, async (req, res) => {
-    const { code } = req.params
-    const { since } = req.query
-    try {
-        const game = await repository.getDetailsGameByCode(code)
-        if (!game) return res.status(404).json({ error: 'Partie introuvable' })
+  const { code } = req.params
+  const { since } = req.query
+  try {
+    const game = await repository.getDetailsGameByCode(code)
+    if (!game) return res.status(404).json({ error: 'Partie introuvable' })
 
-        const state = toState(game, req.user.id)
-        if (since !== undefined && Number(since) === state.version) {
-            return res.json({ changed: false })
-        }
-        res.json({ changed: true, ...state })
-    } catch (err) {
-        console.error(err)
-        res.status(500).json({ error: 'Erreur serveur' })
+    const state = toState(game, req.user.id)
+    if (since !== undefined && Number(since) === state.version) {
+      return res.json({ changed: false })
     }
+    res.json({ changed: true, ...state })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
 })
 
 // POST /games/:code/move : valide le coup avec chess.js puis le stocke
 // Fait aussi le endgame 
 router.post('/:code/move', checkAuth, async (req, res) => {
-    const { code } = req.params
-    const { from, to, promotion } = req.body
-    const userId = req.user.id
+  const { code } = req.params
+  const { from, to, promotion } = req.body
+  const userId = req.user.id
+  try {
+    const game = await repository.getDetailsGameByCode(code)
+    if (!game) return res.status(404).json({ error: 'Partie introuvable' })
+
+    const color = getColor(game, userId)
+    if (!color) return res.status(403).json({ error: "Tu ne joues pas dans cette partie" })
+    if (game.state !== 'en cours') return res.status(409).json({ error: 'Partie non active' })
+
+    const chess = new Chess()
+    if (game.pgn) chess.loadPgn(game.pgn)
+    if (chess.turn() !== color) return res.status(409).json({ error: "Ce n'est pas ton tour" })
+
+    // chess.js lance une erreur si le coup est illégal
     try {
-        const game = await repository.getDetailsGameByCode(code)
-        if (!game) return res.status(404).json({ error: 'Partie introuvable' })
-
-        const color = getColor(game, userId)
-        if (!color) return res.status(403).json({ error: "Tu ne joues pas dans cette partie" })
-        if (game.state !== 'en cours') return res.status(409).json({ error: 'Partie non active' })
-
-        const chess = new Chess()
-        if (game.pgn) chess.loadPgn(game.pgn)
-        if (chess.turn() !== color) return res.status(409).json({ error: "Ce n'est pas ton tour" })
-
-        // chess.js lance une erreur si le coup est illégal
-        try {
-            chess.move({ from, to, promotion: promotion || 'q' })
-        } catch {
-            return res.status(400).json({ error: 'Coup illégal' })
-        }
-
-        // fin de partie : mat ou nulle
-        let result = null
-        if (chess.isGameOver()) {
-            result = chess.isCheckmate() ? (color === 'w' ? 'white' : 'black') : 'draw'
-        }
-
-        await repository.saveMove(game.id, chess.pgn(), chess.fen(), result)
-
-        // si la partie est finie, on l'enregistre dans history_games
-        let winnerId = null
-        let endedBy = null
-        if (result) {
-            await repository.setGameState(game.id, 'finished')
-
-            const isDraw = result === 'draw'
-            winnerId = isDraw ? null : userId
-            endedBy = isDraw ? (chess.isStalemate() ? 'stalemate' : 'draw') : 'checkmate'
-
-            await repository.createGameResult(
-                isDraw ? 'Nulle' : 'Victoire',
-                endedBy,
-                winnerId,
-                game.creator_id,
-                game.joiner_id,
-                game.id
-            )
-        }
-
-        const updated = {
-            ...game,
-            pgn: chess.pgn(),
-            fen: chess.fen(),
-            result,
-            move_count: game.move_count + 1,
-            state: result ? 'finished' : game.state,
-            last_winner_id: winnerId,
-            last_ended_by: endedBy,
-        }
-        res.json({ changed: true, ...toState(updated, userId) })
-    } catch (err) {
-        console.error(err)
-        res.status(500).json({ error: 'Erreur serveur' })
+      chess.move({ from, to, promotion: promotion || 'q' })
+    } catch {
+      return res.status(400).json({ error: 'Coup illégal' })
     }
+
+    // fin de partie : mat ou nulle
+    let result = null
+    if (chess.isGameOver()) {
+      result = chess.isCheckmate() ? (color === 'w' ? 'white' : 'black') : 'draw'
+    }
+
+    await repository.saveMove(game.id, chess.pgn(), chess.fen(), result)
+
+    // si la partie est finie, on l'enregistre dans history_games
+    let winnerId = null
+    let endedBy = null
+    if (result) {
+      await repository.setGameState(game.id, 'finished')
+
+      const isDraw = result === 'draw'
+      winnerId = isDraw ? null : userId
+      endedBy = isDraw ? (chess.isStalemate() ? 'stalemate' : 'draw') : 'checkmate'
+
+      await repository.createGameResult(
+        isDraw ? 'Nulle' : 'Victoire',
+        endedBy,
+        winnerId,
+        game.creator_id,
+        game.joiner_id,
+        game.id
+      )
+    }
+
+    const updated = {
+      ...game,
+      pgn: chess.pgn(),
+      fen: chess.fen(),
+      result,
+      move_count: game.move_count + 1,
+      state: result ? 'finished' : game.state,
+      last_winner_id: winnerId,
+      last_ended_by: endedBy,
+    }
+    // changements pour socket.io
+    const playerState = toState(updated, userId)
+    const sharedState = {...playerState}
+    // on retire le color pour que chaque joueur gère sa propre couleur mais le reste est pareil
+    delete sharedState.color
+    // envoye le state à socket.io
+    getIO().to(`game:${game.id}`)
+      .emit("game:state", sharedState)
+    res.json({ changed: true, ...playerState})
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
 })
 
 export default router;
