@@ -170,6 +170,9 @@ function App() {
                 <p><strong>Créateur:</strong> {game.creator_name}</p>
                 <p><strong>Joueur 2:</strong> {game.joiner_name || 'En attente'}</p>
                 <p><strong>État:</strong> {game.state}</p>
+                <Link to={`/game/${game.code}`} className="button is-link is-light mt-2">
+                  {user?.id === game.creator_id || user?.id === game.joiner_id ? 'Revenir à la partie' : 'Spectate'}
+                </Link>
               </div>
             ))}
           </div>

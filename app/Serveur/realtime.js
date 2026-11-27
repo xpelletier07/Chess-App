@@ -15,19 +15,27 @@ export function attachRealtime(server) {
     // middleware pour vérifier le token du joueur
     io.use((socket, next) => {
         const token = socket.handshake.auth?.token;
-        if (token !== undefined) {
-            const payload = jwt.verify(token, process.env.JWT_SECRET)
-            if (!payload) return next(new Error('Jeton invalide.'))
-            socket.data.user = payload
+        // si pas de token, on laisse passer mais on met user à null
+        if (!token) {
+            socket.data.user = null
+            return next()
         }
-        next();
+
+        // jwt.verify LANCE une erreur si le token est invalide/expiré
+        try {
+            socket.data.user = jwt.verify(token, process.env.JWT_SECRET)
+            next()
+        } catch {
+            next(new Error('Jeton invalide.'))
+        }
     });
 
     // fonction de base qui gère tous les événements, mettre vos autres fonctions/évenements plus bas 
     io.on("connection", (socket) => {
-        // pour tests & debugging
-        console.log(`utilisateur ${socket.data.user.id} connecté`)
+        const userId = socket.data.user?.id ?? null
+        console.log(`utilisateur ${userId ?? "invité"} connecté`)
         socket.on("game:join", async ({ code }, ack) => {
+            if (typeof ack !== "function") return
             try {
                 //
                 const game = await repository.getDetailsGameByCode(code)
@@ -38,18 +46,13 @@ export function attachRealtime(server) {
                 }
 
                 // récupère la couleur (blancs ou noirs) pour la partie selon le user
-                // doit peut être être changé plus tard pour permettre aux spectateurs? 
-                const couleur = getColor(game, socket.data.user.id)
-                if (!couleur) {
-                    return ack({
-                        ok: false, error: "Ce joueur n'est pas dans cette partie"
-                    })
-                }
-
+                // 'w', 'b' ou null (spectateur, connecté ou invité)
+                const couleur = getColor(game, userId)
+                const role = couleur ?? "spectator"
                 // rejoin la partie si tout est ok et retourne le ack
                 socket.join(`game:${game.id}`)
                 ack({
-                    ok: true, state: toState(game, socket.data.user.id)
+                    ok: true, role, state: toState(game, userId)
                 })
             }
             catch (error) {

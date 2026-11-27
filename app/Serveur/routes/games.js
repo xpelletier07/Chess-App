@@ -1,6 +1,7 @@
 import express from 'express';
 import * as repository from '../repository/repository.js';
 import { checkAuth } from '../middlewares/checkAuth.js';
+import { optionalAuth } from '../middlewares/optionalAuth.js';
 import { toState, getColor } from '../utils/gameState.js';
 import { Chess } from 'chess.js'
 import { getIO } from '../realtime.js';
@@ -67,6 +68,11 @@ router.post('/:code/forfeit', checkAuth, async (req, res) => {
     if (result.error) {
       return res.status(result.status).json({ error: result.error });
     }
+    const game = await repository.getDetailsGameByCode(req.params.code)
+    const sharedState = toState(game, null)
+    delete sharedState.color
+    getIO().to(`game:${game.id}`).emit("game:state", sharedState)
+
     return res.json(result);
   } catch (error) {
     console.error('Erreur dans POST /games/:code/forfeit', error);
@@ -149,14 +155,14 @@ router.post('/result', checkAuth, async (req, res) => {
   }
 });
 
-router.get('/details/:code', checkAuth, async (req, res) => {
+router.get('/details/:code', optionalAuth, async (req, res) => {
   const { code } = req.params
   const { since } = req.query
   try {
     const game = await repository.getDetailsGameByCode(code)
     if (!game) return res.status(404).json({ error: 'Partie introuvable' })
 
-    const state = toState(game, req.user.id)
+    const state = toState(game, req.user?.id ?? null)
     if (since !== undefined && Number(since) === state.version) {
       return res.json({ changed: false })
     }

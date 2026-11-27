@@ -1,9 +1,10 @@
 import { Chess } from 'chess.js'
 
 export function getColor(game, userId) {
+    if (userId == null) return null // spectateur non connecté
     if (Number(game.creator_id) === Number(userId)) return 'w'
     if (Number(game.joiner_id) === Number(userId)) return 'b'
-    return null // spectateur
+    return null // spectateur si connecté mais pas joueur
 }
 
 export function toState(game, userId) {
@@ -20,6 +21,7 @@ export function toState(game, userId) {
         state: game.state,
         result: game.result,
         winnerId: game.last_winner_id ?? null,
+        winnerColor: game.last_winner_id ? getColor(game, game.last_winner_id) : null,
         endedBy: game.last_ended_by ?? null,
         color: getColor(game, userId),
         history: moves.map((m) => m.san),
