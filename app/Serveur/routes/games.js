@@ -14,7 +14,9 @@ router.post("/newGame", checkAuth, async (req, res) => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     await repository.createGame(code, creatorId);
     const game = await repository.findGameByCode(code);
-
+    if (!game) {
+      return res.status(404).json({ error: 'Partie non trouvée' });
+    }
     return res.status(201).json({ game });
   }
   catch (error) {
@@ -97,6 +99,17 @@ router.get('/history/:id', async (req, res) => {
     return res.status(500).json({ error: 'Erreur serveur' });
   }
 });
+
+// doit être AVANT '/:code', sinon Express prend "allGames" pour un code de partie
+router.get('/allGames', async (req, res) => {
+  try {
+    const games = await repository.getAllGames()
+    res.json({ games })
+  } catch (error) {
+    console.error('Erreur dans GET /games/allGames', error)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
 
 router.get('/:code', checkAuth, async (req, res) => {
   try {

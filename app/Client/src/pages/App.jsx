@@ -1,15 +1,33 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { API_BASE_URL } from '../config'
-import { useState } from "react";
+import { useState, useEffect} from "react";
 
 function App() {
-  const { user, logout } = useAuth()
+  // token vient du contexte : il est déjà null si la session a expiré
+  const { user, token, logout } = useAuth()
   const [code, setCode] = useState('')
   const [error, setError] = useState(null);
+  const [games, setGames] = useState([]);
   const navigate = useNavigate()
-  // récupérer le token du local storage
-  const token = localStorage.getItem("token")
+  
+  useEffect(() => {
+    async function fetchGames() {
+      try {
+        const reponse = await fetch(`${API_BASE_URL}/games/allGames`, {
+          method: 'GET',
+        })
+        const data = await reponse.json()
+        if (reponse.ok) {
+          setGames(data.games)
+          console.log(data.games)
+        }
+      } catch (e) {
+        setError(e.message)
+      }
+    }
+    fetchGames();
+  }, []);
 
   function handleLogout() {
     logout();
@@ -66,22 +84,30 @@ function App() {
         <nav className="level mb-6">
           <div className="level-left">
             <h1 className="title is-3 mb-0">
-              Échec et App | {user?.nom_utilisateur}
+              Échec et App {token ? `| ${user?.nom_utilisateur}` : ''}
             </h1>
           </div>
           <div className="level-right">
             <div className="buttons">
-              <Link className="button is-link is-light mr-2" to="/history">
-                <span className="icon"><i className="fas fa-history" /></span>
-                <span>Historique</span>
-              </Link>
-              {/* Point d'entrée vers le classement Elo depuis la page d'accueil. */}
-              <Link className="button is-link is-light mr-3" to="/classement">
-                Classement
-              </Link>
-              <button className="button is-danger is-light" onClick={handleLogout}>
-                Déconnexion
-              </button>
+              {token ? (
+                <>
+                  <Link className="button is-link is-light mr-2" to="/history">
+                    <span className="icon"><i className="fas fa-history" /></span>
+                    <span>Historique</span>
+                  </Link>
+                  {/* Point d'entrée vers le classement Elo depuis la page d'accueil. */}
+                  <Link className="button is-link is-light mr-3" to="/classement">
+                    Classement
+                  </Link>
+                  <button className="button is-danger is-light" onClick={handleLogout}>
+                    Déconnexion
+                  </button>
+                </>
+              ) : (
+                <Link className="button is-primary is-light" to="/login">
+                  Se connecter
+                </Link>
+              )}
             </div>
           </div>
         </nav>
@@ -91,46 +117,61 @@ function App() {
         )}
 
         {/* Deux choix exclusifs, côte à côte : on join OU on crée une partie. */}
-        <div className="columns is-vcentered is-centered">
-          <div className="column is-5">
-            <section className="box">
-              <h2 className="title is-4">Rejoindre une partie</h2>
-              <p className="subtitle is-6">Vous avez reçu un code de partie ?</p>
-              <form onSubmit={join}>
-                <div className="field">
-                  <div className="control">
-                    <input
-                      className="input"
-                      value={code}
-                      onChange={(e) => setCode(e.target.value)}
-                      placeholder="Code de partie"
-                      inputMode="numeric"
-                    />
+        {token && (
+          <div className="columns is-vcentered is-centered">
+            <div className="column is-5">
+              <section className="box">
+                <h2 className="title is-4">Rejoindre une partie</h2>
+                <p className="subtitle is-6">Vous avez reçu un code de partie ?</p>
+                <form onSubmit={join}>
+                  <div className="field">
+                    <div className="control">
+                      <input
+                        className="input"
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        placeholder="Code de partie"
+                        inputMode="numeric"
+                      />
+                    </div>
                   </div>
-                </div>
+                  <div className="control">
+                    <button type="submit" className="button is-light is-primary">Rejoindre la partie</button>
+                  </div>
+                </form>
+              </section>
+            </div>
+
+            <div className="column is-narrow has-text-centered">
+              <span className="tag is-medium">ou</span>
+            </div>
+
+            <div className="column is-5">
+              <section className="box">
+                <h2 className="title is-4">Créer une nouvelle partie</h2>
+                <p className="subtitle is-6">
+                  Obtenir un code pour inviter un autre joueur de votre choix
+                </p>
                 <div className="control">
-                  <button type="submit" className="button is-light is-primary">Rejoindre la partie</button>
+                  <button onClick={create} className="button is-light is-primary">
+                    Obtenir son code
+                  </button>
                 </div>
-              </form>
-            </section>
+              </section>
+            </div>
           </div>
+        )}
 
-          <div className="column is-narrow has-text-centered">
-            <span className="tag is-medium">ou</span>
-          </div>
-
-          <div className="column is-5">
-            <section className="box">
-              <h2 className="title is-4">Créer une nouvelle partie</h2>
-              <p className="subtitle is-6">
-                Obtenir un code pour inviter un autre joueur de votre choix
-              </p>
-              <div className="control">
-                <button onClick={create} className="button is-light is-primary">
-                  Obtenir son code
-                </button>
+        <div className="section">
+          <h2 className="title is-4">Toutes les parties</h2>
+          <div className="content">
+            {games.map((game) => (
+              <div key={game.id} className="card mb-3 p-3">
+                <p><strong>Créateur:</strong> {game.creator_name}</p>
+                <p><strong>Joueur 2:</strong> {game.joiner_name || 'En attente'}</p>
+                <p><strong>État:</strong> {game.state}</p>
               </div>
-            </section>
+            ))}
           </div>
         </div>
       </div>
