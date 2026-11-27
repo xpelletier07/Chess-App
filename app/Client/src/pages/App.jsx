@@ -162,21 +162,70 @@ function App() {
           </div>
         )}
 
-        <div className="section">
-          <h2 className="title is-4">Toutes les parties</h2>
-          <div className="content">
-            {games.map((game) => (
-              <div key={game.id} className="card mb-3 p-3">
-                <p><strong>Créateur:</strong> {game.creator_name}</p>
-                <p><strong>Joueur 2:</strong> {game.joiner_name || 'En attente'}</p>
-                <p><strong>État:</strong> {game.state}</p>
-                <Link to={`/game/${game.code}`} className="button is-link is-light mt-2">
-                  {user?.id === game.creator_id || user?.id === game.joiner_id ? 'Revenir à la partie' : 'Spectate'}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
+        <section className="box mt-6">
+          <h2 className="title is-4 mb-4">
+            <span className="icon-text">
+              <span className="icon has-text-danger"><i className="fas fa-circle fa-xs" /></span>
+              <span>Parties en direct</span>
+            </span>
+          </h2>
+
+          {games.length === 0 ? (
+            <p className="has-text-grey has-text-centered py-5">
+              Aucune partie en cours pour le moment.
+            </p>
+          ) : (
+            <div className="columns is-multiline">
+              {games.map((game) => {
+                const isPlayer = user?.id === game.creator_id || user?.id === game.joiner_id
+                return (
+                  // le code est unique (la requête ne renvoie pas game.id)
+                  <div key={game.code} className="column is-one-third-desktop is-half-tablet">
+                    <div className="card" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                      <div className="card-content" style={{ flexGrow: 1 }}>
+                        <div className="level is-mobile mb-3">
+                          <div className="level-left">
+                            <span className="tag is-light">#{game.code}</span>
+                          </div>
+                          <div className="level-right">
+                            <span className="tag is-success is-light">{game.state}</span>
+                          </div>
+                        </div>
+
+                        <p className="is-size-5 has-text-centered">
+                          <span className="icon-text">
+                            {/* far (regular) n'est pas gratuit pour les pièces : roi blanc = solid en gris clair */}
+                            <span className="icon has-text-grey-lighter"><i className="fas fa-chess-king" /></span>
+                            <strong>{game.creator_name}</strong>
+                          </span>
+                        </p>
+                        <p className="has-text-grey is-size-7 has-text-centered my-1">VS</p>
+                        <p className="is-size-5 has-text-centered">
+                          <span className="icon-text">
+                            <span className="icon"><i className="fas fa-chess-king" /></span>
+                            <strong>{game.joiner_name || 'En attente'}</strong>
+                          </span>
+                        </p>
+                      </div>
+
+                      <footer className="card-footer">
+                        <Link
+                          to={`/game/${game.code}`}
+                          className={`card-footer-item has-text-weight-semibold ${isPlayer ? 'has-text-success' : 'has-text-link'}`}
+                        >
+                          <span className="icon-text">
+                            <span className="icon"><i className={`fas ${isPlayer ? 'fa-chess-board' : 'fa-eye'}`} /></span>
+                            <span>{isPlayer ? 'Revenir à la partie' : 'Regarder'}</span>
+                          </span>
+                        </Link>
+                      </footer>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );
