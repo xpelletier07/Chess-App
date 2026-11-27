@@ -43,7 +43,8 @@ export default function Game() {
         async function loadInitialState() {
             try {
                 const response = await fetch(`${API_BASE_URL}/games/details/${code}`,
-                    { headers: { Authorization: `Bearer ${token}` } }
+                    // si token, on l'envoie pour que le serveur puisse vérifier l'authentification
+                    { headers: token ? { Authorization: `Bearer ${token}` } : {} }
                 )
                 const data = await response.json()
 
@@ -64,7 +65,8 @@ export default function Game() {
 
         // crée la connection websocket
         const socket = io(API_BASE_URL, {
-            auth: { token },
+            // si token, on l'envoie pour que le serveur puisse vérifier l'authentification
+            auth: token ? { token } : {},
             autoConnect: false
         })
 
@@ -145,15 +147,21 @@ export default function Game() {
     // modal de fin de partie
     useEffect(() => {
         if (state?.state !== "finished" || gameResult) return
-
+        
         const isWinner = Number(state.winnerId) === Number(user?.id)
         let message
         if (state.endedBy === "forfeit") {
-            message = isWinner
-                ? "Victoire ! Votre adversaire a abandonné la partie."
-                : "La partie a été enregistrée comme un abandon."
+            if (isSpectator) {
+                message = `Les ${state.winnerColor === "w" ? "blancs" : "noirs"} ont gagné par abandon.`
+            } else {
+                message = isWinner ? "Victoire ! Votre adversaire a abandonné la partie." : "La partie a été enregistrée comme un abandon."
+            }
         } else if (state.endedBy === "checkmate") {
-            message = isWinner ? "Victoire par échec et mat !" : "Défaite : échec et mat."
+            if (isSpectator) {
+                message = `Les ${state.winnerColor === "w" ? "blancs" : "noirs"} ont gagné par échec et mat.`
+            } else {
+                message = isWinner ? "Victoire par échec et mat !" : "Défaite : échec et mat."
+            }
         } else {
             message = "Partie nulle."
         }
@@ -161,6 +169,8 @@ export default function Game() {
     }, [state, gameResult, user])
 
     async function forfeit() {
+        // si pas de couleur (spectateur), on ne fait rien
+        if (!state?.color) return false
         if (savingResult || gameResult) return
 
         setSavingResult(true)
@@ -181,6 +191,8 @@ export default function Game() {
     }
 
     async function onPieceDrop({ sourceSquare, targetSquare }) {
+        // si pas de couleur (spectateur), on ne fait rien
+        if (!state?.color) return false
         if (!targetSquare || !state) return false
         if (state.state !== "en cours" || state.turn !== state.color) return false
 
@@ -203,6 +215,8 @@ export default function Game() {
     }
 
     async function sendMove(move, previous) {
+        // si pas de couleur (spectateur), on ne fait rien
+        if (!state?.color) return false
         try {
             const response = await fetch(`${API_BASE_URL}/games/${code}/move`, {
                 method: "POST",
@@ -225,6 +239,7 @@ export default function Game() {
     }
 
     if (!state) return <p>{error || "Chargement..."}</p>
+    const isSpectator = !state.color
 
     const highlight = { backgroundColor: "rgba(255, 255, 0, 0.4)" }
     const squareStyles = state.lastMove
@@ -233,22 +248,33 @@ export default function Game() {
 
     const chessboardOptions = {
         position: state.fen,
+        allowDragging: !isSpectator,
+        allowPremoves: !isSpectator,
         onPieceDrop,
         boardOrientation: state.color === "b" ? "black" : "white",
         squareStyles,
         id: "main-board",
     }
 
-    const message = state.turn === state.color ? "À toi de jouer" : "Tour de l'adversaire"
+    const message = isSpectator
+    ? `Trait aux ${state.turn === "w" ? "blancs" : "noirs"}`
+    : state.turn === state.color ? "À toi de jouer" : "Tour de l'adversaire"
 
     return (
         <main className="hero is-fullheight">
             <div className="hero-body">
                 <div className="container has-text-centered">
                     <section className="box">
-                        <h1 className="title is-2">Partie en cours</h1>
-                        <p className="subtitle is-5">La partie {code} est prête.</p>
-                        <div className="notification is-info is-light">
+                        <div style={{ position: "relative" }}>
+                            { isSpectator && (
+                                <Link to="/" className="button is-link is-light" style={{ position: "absolute", left: 0, top: "50%", transform: "translateY(-50%)" }}>
+                                    Retour à l'accueil
+                                </Link>
+                            )}
+                            <h1 className="title is-2">Partie en cours</h1>
+                            <p className="subtitle is-5">La partie {code} est prête.</p>
+                        </div>
+                        <div className="notification is-info is-light mt-4">
                             {state.color
                                 ? `Tu joues les ${state.color === "w" ? "blancs" : "noirs"}. `
                                 : "Spectateur. "}
@@ -273,7 +299,7 @@ export default function Game() {
                         </div>
 
                         {error && <div className="notification is-danger is-light">{error}</div>}
-                        <Forfeit onForfeit={forfeit} disabled={savingResult || Boolean(gameResult)} />
+                        {!isSpectator && <Forfeit onForfeit={forfeit} disabled={savingResult || Boolean(gameResult)} />}
                         {savingResult && <p className="mt-4">Enregistrement de l'abandon...</p>}
                     </section>
                 </div>

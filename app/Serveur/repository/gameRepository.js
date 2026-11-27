@@ -230,3 +230,15 @@ export async function joinGame(code, playerId) {
 export async function changeGameState(newState, gameId) {
     await pool.query('update game set state = $1 where id = $2', [newState, gameId])
 }
+
+export async function getAllGames() {
+    // les JOIN doivent venir avant le WHERE
+    const { rows } = await pool.query(`
+        SELECT creator.username AS creator_name, joiner.username AS joiner_name, game.code, game.state, game.creator_id, game.joiner_id
+        FROM game
+        LEFT JOIN users creator ON creator.id = game.creator_id
+        LEFT JOIN users joiner ON joiner.id = game.joiner_id
+        WHERE game.state NOT IN ('finished', 'lobby')`
+    )
+    return rows
+}

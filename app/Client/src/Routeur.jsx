@@ -21,9 +21,9 @@ function Routeur() {
 					<Route path="/auth/github/callback" element={<GithubCallback />} />
 					
 					{/* Routes protégées: seuls les utilisateurs authentifiés accèdent aux pages protégées. */}
-					<Route path="/" element={<ProtectedRoute><App /></ProtectedRoute>} />
-					<Route path="/lobby/:code" element={<ProtectedRoute><Lobby /></ProtectedRoute>} />
-					<Route path="/game/:code" element={<ProtectedRoute><Game /></ProtectedRoute>} />
+					<Route path="/" element={<App />}/>
+					<Route path="/lobby/:code" element={<Lobby />}/>
+					<Route path="/game/:code" element={<Game />}/>
 					<Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
 					<Route path="/classement" element={<ProtectedRoute><Classement /></ProtectedRoute>} />
 
